@@ -321,3 +321,251 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
+// Investimentos
+let rendaFixa = [];
+let acoes = [];
+let chartInvestimentos;
+
+// Função para verificar se uma data é um dia útil
+function eDiaUtil(data) {
+  const dia = data.getDay();
+  return dia !== 0 && dia !== 6; // 0: domingo, 6: sábado
+}
+
+// Função para ajustar a data para o próximo dia útil
+function proximoDiaUtil(data) {
+  let novaData = new Date(data);
+  while (!eDiaUtil(novaData)) {
+    novaData.setDate(novaData.getDate() + 1); // Avança para o próximo dia útil
+  }
+  return novaData;
+}
+
+// Função para calcular dias úteis entre duas datas
+function calcularDiasUteis(dataInicial, dataFinal) {
+  let dias = 0;
+  let dataAtual = new Date(dataInicial);
+
+  while (dataAtual <= dataFinal) {
+    if (eDiaUtil(dataAtual)) {
+      dias++;
+    }
+    dataAtual.setDate(dataAtual.getDate() + 1);
+  }
+
+  return dias;
+}
+
+// Função para calcular dias corridos entre duas datas
+function calcularDiasCorridos(dataInicial, dataFinal) {
+  const umDia = 24 * 60 * 60 * 1000; // em milissegundos
+  const diff = Math.abs(dataFinal - dataInicial);
+  return Math.floor(diff / umDia); // Retorna a diferença em dias corridos
+}
+
+// Função para calcular a Renda Fixa
+function calcularRendaFixa(valor, taxaAnual, dataAplicacao) {
+  const hoje = new Date(); // Data de hoje
+  const dataInicio = proximoDiaUtil(new Date(dataAplicacao)); // Ajustando para o próximo dia útil
+  const diasUteis = calcularDiasUteis(dataInicio, hoje); // Calculando os dias úteis para o rendimento
+
+  if (diasUteis < 0) {
+    return { error: "Data de aplicação no futuro" };
+  }
+
+  // Cálculo da taxa diária (composta) a partir da taxa anual
+  const taxaDiaria = Math.pow(1 + taxaAnual / 100, 1 / 365) - 1;
+
+  // Cálculo do valor bruto com juros compostos com base em dias úteis
+  const valorBruto = valor * Math.pow(1 + taxaDiaria, diasUteis);
+  const rendimentoBruto = valorBruto - valor;
+
+  // Cálculo do IOF com base em dias corridos
+  const diasCorridos = calcularDiasCorridos(dataInicio, hoje); // Calculando os dias corridos para o IOF
+  let iof = 0;
+  if (diasCorridos < 30) {
+    const tabelaIOF = [
+      96, 93, 90, 86, 83, 80, 76, 73, 70, 66,
+      63, 60, 56, 53, 50, 46, 43, 40, 36, 33,
+      30, 26, 23, 20, 16, 13, 10, 6, 3, 0
+    ];
+    const iofPercent = tabelaIOF[diasCorridos - 1] / 100; // IOF calculado de acordo com os dias corridos
+    iof = rendimentoBruto * iofPercent;
+  }
+
+  // Imposto de Renda (IR) regressivo
+  let irAliquota = 0.225;  // 22,5% para até 180 dias
+  if (diasUteis > 720) irAliquota = 0.15;  // 15% acima de 720 dias
+  else if (diasUteis > 360) irAliquota = 0.175;  // 17,5% acima de 360 dias
+  else if (diasUteis > 180) irAliquota = 0.20;  // 20% acima de 180 dias
+
+  const ir = (rendimentoBruto - iof) * irAliquota;
+
+  // Valor líquido final após descontar IOF e IR
+  const valorLiquido = valorBruto - iof - ir;
+
+  return {
+    valorBruto,
+    valorLiquido,
+    rendimentoBruto,
+    iof,
+    ir,
+    dias: diasUteis  // Dias úteis para o cálculo do rendimento
+  };
+}
+
+// Função para salvar investimentos de Renda Fixa
+document.getElementById('salvarRendaFixa').addEventListener('click', function () {
+  const tipo = 'rendaFixa';
+  const valor = parseFloat(document.getElementById('valorRendaFixa').value);
+  const dataAplicacao = new Date(document.getElementById('dataAplicacao').value);
+  const dataVencimento = document.getElementById('dataVencimento').value;
+  const taxa = parseFloat(document.getElementById('taxaRendaFixa').value); // Ex: 13.65 para Nubank/CDI
+
+  if (isNaN(valor) || isNaN(taxa) || !dataAplicacao || !dataVencimento) {
+    alert('Por favor, preencha todos os campos corretamente.');
+    return;
+  }
+
+  const resultado = calcularRendaFixa(valor, taxa, dataAplicacao);
+
+  // Armazenando o investimento de Renda Fixa
+  rendaFixa.push({
+    tipo,
+    valor,
+    dataAplicacao,
+    dataVencimento,
+    taxa,
+    valorLiquido: resultado.valorLiquido,
+    rendimentoBruto: resultado.rendimentoBruto,
+    iof: resultado.iof,
+    ir: resultado.ir,
+    dias: resultado.dias
+  });
+
+  alert(`Investimento de Renda Fixa salvo!\nRendimento líquido: R$ ${resultado.valorLiquido.toFixed(2).replace('.', ',')}`);
+  salvarInvestimentos();
+});
+
+// Função para salvar investimentos de Ações
+document.getElementById('salvarAcao').addEventListener('click', function () {
+  const acao = document.getElementById('acaoComprada').value;
+  const valor = parseFloat(document.getElementById('valorAcao').value);
+
+  if (!acao || isNaN(valor)) {
+    alert('Por favor, preencha todos os campos corretamente.');
+    return;
+  }
+
+  acoes.push({ acao, valor });
+  alert(`Ação ${acao} comprada por R$ ${valor.toFixed(2).replace('.', ',')}`);
+  salvarInvestimentos();
+});
+
+// Função para salvar no localStorage e renderizar os investimentos
+function salvarInvestimentos() {
+  localStorage.setItem('rendaFixa', JSON.stringify(rendaFixa));
+  localStorage.setItem('acoes', JSON.stringify(acoes));
+  renderizarInvestimentos();
+}
+// Função para renderizar investimentos
+function renderizarInvestimentos() {
+  const container = document.getElementById('listaInvestimentos');
+  container.innerHTML = ''; // Limpa antes de renderizar
+  
+  const investimentosRendaFixa = JSON.parse(localStorage.getItem('rendaFixa')) || [];
+  const investimentosAcoes = JSON.parse(localStorage.getItem('acoes')) || [];
+
+  investimentosRendaFixa.forEach((inv, index) => {
+    const item = document.createElement('div');
+    item.className = 'bg-gray-100 p-4 rounded-xl shadow mb-4';
+    item.innerHTML = `
+      <p><strong>Tipo:</strong> ${inv.tipo}</p>
+      <p><strong>Valor:</strong> R$ ${inv.valor.toFixed(2).replace('.', ',')}</p>
+      <p><strong>Data Aplicação:</strong> ${new Date(inv.dataAplicacao).toLocaleDateString()}</p>
+      <p><strong>Data Vencimento:</strong> ${new Date(inv.dataVencimento).toLocaleDateString()}</p>
+      <p><strong>Taxa:</strong> ${inv.taxa}%</p>
+      <p><strong>Rendimento Líquido:</strong> R$ ${inv.valorLiquido.toFixed(2).replace('.', ',')}</p>
+      <button onclick="excluirInvestimento(${index})" class="mt-3 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">
+        Excluir
+      </button>
+    `;
+    container.appendChild(item);
+  });
+
+  // Atualiza o gráfico
+  atualizarGraficoInvestimentos(investimentosRendaFixa, investimentosAcoes);
+}
+
+// Função para atualizar o gráfico de investimentos
+function atualizarGraficoInvestimentos(rendaFixa, acoes) {
+  const ctx = document.getElementById('graficoInvestimentos');
+  if (!ctx) return;
+
+  const totalRendaFixa = rendaFixa.reduce((acc, item) => acc + item.valorLiquido, 0);
+  const totalAcoes = acoes.reduce((acc, item) => acc + item.valor, 0);
+
+  if (chartInvestimentos) {
+    chartInvestimentos.destroy();
+  }
+
+  chartInvestimentos = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Renda Fixa', 'Ações'],
+      datasets: [
+        {
+          label: 'Renda Fixa',
+          data: [totalRendaFixa],
+          backgroundColor: 'rgba(34, 197, 94, 0.7)',
+        },
+        {
+          label: 'Ações',
+          data: [totalAcoes],
+          backgroundColor: 'rgba(239, 68, 68, 0.7)',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: value => 'R$ ' + value.toLocaleString('pt-BR'),
+          }
+        }
+      }
+    }
+  });
+
+  console.log("Total Renda Fixa:", totalRendaFixa.toFixed(2));
+}
+
+// Função para obter o CDI atual
+async function obterCDIAtual() {
+  const url = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.4391/dados/ultimos/1?formato=json';
+
+  try {
+    const resposta = await fetch(url);
+    const dados = await resposta.json();
+    return parseFloat(dados[0].valor.replace(',', '.'));
+  } catch (erro) {
+    console.error('Erro ao obter CDI:', erro);
+    return 13.65; // Valor padrão em caso de erro
+  }
+}
+
+// Ao carregar a página, renderiza os investimentos
+window.addEventListener('load', renderizarInvestimentos);
+
+// Função para recalcular os investimentos diariamente
+function atualizarInvestimentosDiariamente() {
+  renderizarInvestimentos();  // Atualiza os investimentos e o gráfico com os novos cálculos
+}
+
+// Chama a função para recalcular ao carregar a página
+window.addEventListener('load', () => {
+  renderizarInvestimentos();  // Atualiza os investimentos ao carregar a página
+  setInterval(atualizarInvestimentosDiariamente, 24 * 60 * 60 * 1000); // Recalcula a cada 24 horas
+});
