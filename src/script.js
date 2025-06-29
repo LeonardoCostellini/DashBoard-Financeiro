@@ -569,3 +569,4 @@ window.addEventListener('load', () => {
   renderizarInvestimentos();  // Atualiza os investimentos ao carregar a página
   setInterval(atualizarInvestimentosDiariamente, 24 * 60 * 60 * 1000); // Recalcula a cada 24 horas
 });
+
