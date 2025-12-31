@@ -1,5 +1,12 @@
 import jwt from "jsonwebtoken";
-import { sql } from "@vercel/postgres";
+import pkg from "pg";
+
+const { Pool } = pkg;
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 export default async function handler(req, res) {
   try {
@@ -30,10 +37,13 @@ export default async function handler(req, res) {
     }
 
     // 🧠 INSERT
-    await sql`
+    await pool.query(
+      `
       INSERT INTO transactions (user_id, valor, tipo, categoria, data)
-      VALUES (${userId}, ${valor}, ${tipo}, ${categoria}, ${data})
-    `;
+      VALUES ($1, $2, $3, $4, $5)
+      `,
+      [userId, valor, tipo, categoria, data]
+    );
 
     return res.status(201).json({ success: true });
 
