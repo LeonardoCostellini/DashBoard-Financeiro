@@ -18,6 +18,9 @@ const categoriaSelect = document.getElementById('categoria');
 const tipoSelect = document.getElementById('tipo');
 const filtroMes = document.getElementById('filtro-mes');
 
+let transacoes = [];
+let chartCombinado = null;
+
 // =======================
 // UTILS
 // =======================
@@ -33,43 +36,47 @@ function formatarBrasileiro(v) {
   });
 }
 
-
 // =======================
-// CATEGORIAS
+// CATEGORIAS (BANCO)
 // =======================
-const categorias = {
-  entrada: ['Salário', 'Bonificação', 'Vale Alimentação'],
-  saida: ['Aluguel', 'Supermercado', 'Luz', 'Internet']
-};
-
-function atualizarCategorias() {
-  categoriaSelect.innerHTML = '';
-  categorias[tipoSelect.value].forEach(cat => {
-    const opt = document.createElement('option');
-    opt.value = cat;
-    opt.textContent = cat;
-    categoriaSelect.appendChild(opt);
+async function carregarCategorias() {
+  const res = await fetch("/api/categories/list", {
+    headers: { Authorization: "Bearer " + token }
   });
+
+  const dados = await res.json();
+  categoriaSelect.innerHTML = "";
+
+  dados
+    .filter(c => c.tipo === tipoSelect.value)
+    .forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.nome;
+      opt.textContent = c.nome;
+      categoriaSelect.appendChild(opt);
+    });
 }
 
+tipoSelect.addEventListener("change", carregarCategorias);
 
+// =======================
+// TRANSAÇÕES
+// =======================
 async function carregarTransacoes() {
   const res = await fetch("/api/transactions/list", {
-    headers: {
-      Authorization: "Bearer " + token
-    }
+    headers: { Authorization: "Bearer " + token }
   });
 
   const data = await res.json();
-
   if (!res.ok) {
-    alert(data.error || "Erro ao carregar transações");
+    alert(data.error || "Erro ao carregar");
     return;
   }
 
   transacoes = data;
   renderizarTransacoes();
   atualizarResumo();
+  atualizarGrafico();
 }
 
 // =======================
@@ -78,49 +85,32 @@ async function carregarTransacoes() {
 form.addEventListener('submit', async e => {
   e.preventDefault();
 
-  const valorInput = document.getElementById("valor").value;
-  const valor = parseValorBrasileiro(valorInput);
-
-  if (isNaN(valor)) {
-    alert("Valor inválido");
-    return;
-  }
+  const valor = parseValorBrasileiro(form.valor.value);
+  if (isNaN(valor)) return alert("Valor inválido");
 
   let data = form.data.value;
-
-  // 🔧 Converte YYYY-MM → YYYY-MM-01
-  if (data.length === 7) {
-    data = data + "-01";
-  }
-
-  const payload = {
-    valor,
-    tipo: tipoSelect.value,
-    categoria: categoriaSelect.value,
-    data
-  };
+  if (data.length === 7) data += "-01";
 
   const res = await fetch("/api/transactions/create", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
+      Authorization: "Bearer " + token
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({
+      valor,
+      tipo: tipoSelect.value,
+      categoria: categoriaSelect.value,
+      data
+    })
   });
 
-  const response = await res.json();
-  console.log("API:", response);
-
-  if (!res.ok) {
-    alert(response.error || "Erro ao salvar");
-    return;
-  }
+  const r = await res.json();
+  if (!res.ok) return alert(r.error || "Erro");
 
   form.reset();
   carregarTransacoes();
 });
-
 
 // =======================
 // RENDER
@@ -133,55 +123,38 @@ function renderizarTransacoes() {
     if (!mes || t.data.startsWith(mes)) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${formatarBrasileiro(Number(t.valor))}</td>
+        <td>${formatarBrasileiro(t.valor)}</td>
         <td>${t.tipo}</td>
         <td>${t.categoria}</td>
         <td>${t.data}</td>
         <td>
-          <button
-            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-            data-id="${t.id}"
-          >
+          <button class="bg-red-500 text-white px-3 py-1 rounded">
             Excluir
           </button>
         </td>
       `;
 
-      const btn = tr.querySelector("button");
-      btn.addEventListener("click", () => excluirTransacao(t.id));
+      tr.querySelector("button")
+        .addEventListener("click", () => excluirTransacao(t.id));
 
       lista.appendChild(tr);
     }
   });
 }
 
-
 // =======================
 // EXCLUIR
 // =======================
-
 async function excluirTransacao(id) {
   if (!confirm("Excluir transação?")) return;
 
   const res = await fetch(`/api/transactions/delete?id=${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: "Bearer " + token
-    }
+    headers: { Authorization: "Bearer " + token }
   });
 
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    alert("Erro inesperado no servidor");
-    return;
-  }
-
-  if (!res.ok) {
-    alert(data.error || "Erro ao excluir");
-    return;
-  }
+  const data = await res.json();
+  if (!res.ok) return alert(data.error || "Erro");
 
   carregarTransacoes();
 }
@@ -195,7 +168,7 @@ function atualizarResumo() {
 
   transacoes.forEach(t => {
     if (!mes || t.data.startsWith(mes)) {
-      t.tipo === 'entrada' ? ent += t.valor : sai += t.valor;
+      t.tipo === "entrada" ? ent += Number(t.valor) : sai += Number(t.valor);
     }
   });
 
@@ -205,84 +178,43 @@ function atualizarResumo() {
 }
 
 // =======================
-// INIT
+// GRÁFICO
 // =======================
-document.addEventListener("DOMContentLoaded", () => {
-  atualizarCategorias();
-  carregarTransacoes();
-});
-
-tipoSelect.addEventListener('change', atualizarCategorias);
-filtroMes.addEventListener('change', () => {
-  renderizarTransacoes();
-  atualizarResumo();
-});
-
 function atualizarGrafico() {
+  let entrada = 0, saida = 0;
   const mes = filtroMes.value;
-
-  let entrada = 0;
-  let saida = 0;
 
   transacoes.forEach(t => {
     if (!mes || t.data.startsWith(mes)) {
-      if (t.tipo === "entrada") entrada += Number(t.valor);
-      else saida += Number(t.valor);
+      t.tipo === "entrada"
+        ? entrada += Number(t.valor)
+        : saida += Number(t.valor);
     }
   });
 
   const ctx = document.getElementById("grafico").getContext("2d");
-
-  if (chartCombinado) {
-    chartCombinado.destroy();
-  }
+  if (chartCombinado) chartCombinado.destroy();
 
   chartCombinado = new Chart(ctx, {
     type: "doughnut",
     data: {
       labels: ["Entradas", "Saídas"],
-      datasets: [{
-        data: [entrada, saida]
-      }]
+      datasets: [{ data: [entrada, saida] }]
     },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: "bottom"
-        }
-      }
-    }
+    options: { responsive: true }
   });
 }
 
-async function carregarCategorias() {
-  const res = await fetch("/api/categories/list", {
-    headers: { Authorization: "Bearer " + token }
-  });
+// =======================
+// INIT
+// =======================
+document.addEventListener("DOMContentLoaded", () => {
+  carregarCategorias();
+  carregarTransacoes();
+});
 
-  const categorias = await res.json();
-  const select = document.getElementById("categoria");
-
-  select.innerHTML = "<option value=''>Selecione</option>";
-
-  categorias.forEach(cat => {
-    const opt = document.createElement("option");
-    opt.value = cat.nome;
-    opt.textContent = cat.nome;
-    select.appendChild(opt);
-  });
-}
-
-function renderMeta(meta) {
-  return `
-    <div class="bg-white p-4 rounded shadow mb-2">
-      <h3>${meta.nome}</h3>
-      <p>R$ ${meta.valor_atual} / R$ ${meta.valor_total}</p>
-      <div class="w-full bg-gray-200 h-3 rounded">
-        <div class="bg-green-500 h-3 rounded" style="width:${meta.progresso}%"></div>
-      </div>
-    </div>
-  `;
-}
-
+filtroMes.addEventListener("change", () => {
+  renderizarTransacoes();
+  atualizarResumo();
+  atualizarGrafico();
+});
