@@ -41,42 +41,23 @@ async function register() {
 }
 
 async function login() {
-  const emailInput = document.getElementById("email");
-  const senhaInput = document.getElementById("senha");
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("senha").value;
 
-  if (!emailInput || !senhaInput) {
-    alert("Campos de login não encontrados");
+  const res = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.error || "Login inválido");
     return;
   }
 
-  const email = emailInput.value;
-  const password = senhaInput.value;
-
-  if (!email || !password) {
-    alert("Preencha email e senha");
-    return;
-  }
-
-  try {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error || "Erro ao fazer login");
-      return;
-    }
-
-    localStorage.setItem("token", data.token);
-    window.location.href = "/";
-  } catch (err) {
-    console.error(err);
-    alert("Erro de conexão");
-  }
+  localStorage.setItem("token", data.token);
+  window.location.href = "/";
 }
+
