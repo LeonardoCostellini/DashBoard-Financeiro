@@ -19,13 +19,13 @@ export default async function handler(req, res) {
     const token = auth.split(" ")[1];
     jwt.verify(token, process.env.JWT_SECRET);
 
-    const result = await pool.query(
-      "SELECT id, nome, tipo FROM categories ORDER BY nome"
+    const { rows } = await pool.query(
+      "SELECT nome, tipo FROM categories ORDER BY nome"
     );
 
-    res.status(200).json(result.rows);
+    res.status(200).json(rows);
   } catch (err) {
-    console.error("CATEGORIES ERROR:", err);
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 }

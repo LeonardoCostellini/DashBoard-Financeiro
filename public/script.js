@@ -38,39 +38,77 @@ function formatarBrasileiro(v) {
 // CATEGORIAS
 // =======================
 const categorias = {
-  entrada: ['Salário', 'Bonificação', 'Vale Alimentação'],
-  saida: ['Aluguel', 'Supermercado', 'Luz', 'Internet']
+  entrada: [
+    'Salário',
+    'Bonificação',
+    'Vale Alimentação',
+    'Dinheiro Emprestado',
+    '13°'
+  ],
+  saida: [
+    'MORADIA (ALUGUEL/FINANCIAMENTO)',
+    'CONDOMÍNIO',
+    'SUPERMERCADO (VALOR MÉDIO)',
+    'LUZ (INCLUSO NO CONDOMÍNIO?)',
+    'GÁS (INCLUSO NO CONDOMÍNIO?)',
+    'IPTU (INCLUSO NO CONDOMÍNIO?)',
+    'PLANO DE SAÚDE',
+    'SEGURO DE VIDA',
+    'INVESTIMENTOS',
+    'FALCULDADE',
+    'RESERVA DE EMERGENCIA',
+    'CARTÃO DE CRÉDITO',
+    'COMBUSTÍVEL',
+    'UNIMED',
+    'GASTOS COM ANIMAIS',
+    'GASTOS IMPREVISTOS',
+    'GASTOS COM TRANSPORTE',
+    'GASTOS COM VEÍCULO',
+    'INTERNET RESIDENCIAL',
+    'ASSINATURAS(EX:NETFLIX)',
+    'PADARIA/FEIRA',
+    'SAÍDAS/CINEMA/LAZER',
+    'CABELEIRO',
+    'TARIFAS BANCÁRIAS',
+    'TELEFONIA/CELULAR'
+  ]
+
 };
 
-function atualizarCategorias() {
-  categoriaSelect.innerHTML = '';
-  categorias[tipoSelect.value].forEach(cat => {
-    const opt = document.createElement('option');
-    opt.value = cat;
-    opt.textContent = cat;
-    categoriaSelect.appendChild(opt);
+async function atualizarCategorias() {
+  const res = await fetch("/api/categories/list", {
+    headers: { Authorization: "Bearer " + token }
   });
-}
 
+  if (!res.ok) return;
+
+  const data = await res.json();
+  categoriaSelect.innerHTML = "";
+
+  data
+    .filter(c => c.tipo === tipoSelect.value)
+    .forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.nome;
+      opt.textContent = c.nome;
+      categoriaSelect.appendChild(opt);
+    });
+}
 
 async function carregarTransacoes() {
   const res = await fetch("/api/transactions/list", {
-    headers: {
-      Authorization: "Bearer " + token
-    }
+    headers: { Authorization: "Bearer " + token }
   });
 
   const data = await res.json();
-
-  if (!res.ok) {
-    alert(data.error || "Erro ao carregar transações");
-    return;
-  }
+  if (!res.ok) return;
 
   transacoes = data;
   renderizarTransacoes();
   atualizarResumo();
+  atualizarGrafico(); // ⬅️ aqui
 }
+
 
 // =======================
 // CRIAR TRANSAÇÃO
