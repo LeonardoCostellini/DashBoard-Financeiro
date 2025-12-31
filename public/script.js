@@ -605,3 +605,62 @@ fetch("/api/transactions/create", {
     month: "2025-01-01"
   })
 });
+
+
+const token = localStorage.getItem("token");
+
+fetch("/api/transactions/create", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + token
+  },
+  body: JSON.stringify({
+    valor,
+    tipo,
+    categoria,
+    data
+  })
+});
+
+fetch("/api/transactions/list", {
+  headers: {
+    Authorization: "Bearer " + localStorage.getItem("token")
+  }
+})
+.then(r => r.json())
+.then(dados => {
+  // renderiza tabela
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  carregarTransacoes();
+});
+
+async function carregarTransacoes() {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  const res = await fetch("/api/transactions/list", {
+    headers: {
+      Authorization: "Bearer " + token
+    }
+  });
+
+  const dados = await res.json();
+
+  if (!res.ok) {
+    alert("Erro ao carregar dados");
+    return;
+  }
+
+  // 👇 AQUI você usa "dados" para preencher a tabela
+  console.log(dados);
+
+  // exemplo:
+  // renderizarTabela(dados);
+}

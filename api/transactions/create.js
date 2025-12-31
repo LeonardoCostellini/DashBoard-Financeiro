@@ -1,15 +1,21 @@
+import { Pool } from "pg";
+import { getUserId } from "../utils/auth.js";
 
-import { pool } from "../_db";
-import { auth } from "../_auth";
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 export default async function handler(req, res) {
-  const { userId } = auth(req);
-  const { value, type, category_id, month } = req.body;
+  const userId = getUserId(req);
+  if (!userId) return res.status(401).json({ error: "Não autorizado" });
+
+  const { valor, tipo, categoria, data } = req.body;
 
   await pool.query(
-    `INSERT INTO transactions (user_id,category_id,type,value,month)
-     VALUES ($1,$2,$3,$4,$5)`,
-    [userId, category_id, type, value, month]
+    `INSERT INTO transactions (user_id, valor, tipo, categoria, data)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [userId, valor, tipo, categoria, data]
   );
 
   res.json({ success: true });
