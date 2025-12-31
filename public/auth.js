@@ -1,39 +1,14 @@
-async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("senha").value;
+async function register() {
+  const emailInput = document.getElementById("email");
+  const senhaInput = document.getElementById("senha");
 
-  if (!email || !password) {
-    alert("Preencha email e senha");
+  if (!emailInput || !senhaInput) {
+    alert("Campos de cadastro não encontrados");
     return;
   }
 
-  try {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error || "Erro ao fazer login");
-      return;
-    }
-
-    localStorage.setItem("token", data.token);
-    window.location.href = "/";
-  } catch (err) {
-    console.error(err);
-    alert("Erro de conexão");
-  }
-}
-
-async function register() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("senha").value;
+  const email = emailInput.value;
+  const password = senhaInput.value;
 
   if (!email || !password) {
     alert("Preencha email e senha");
@@ -58,6 +33,48 @@ async function register() {
 
     alert("Conta criada com sucesso!");
     window.location.href = "/login.html";
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro de conexão");
+  }
+}
+
+async function login() {
+  const emailInput = document.getElementById("email");
+  const senhaInput = document.getElementById("senha");
+
+  if (!emailInput || !senhaInput) {
+    alert("Campos de login não encontrados");
+    return;
+  }
+
+  const email = emailInput.value;
+  const password = senhaInput.value;
+
+  if (!email || !password) {
+    alert("Preencha email e senha");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Erro ao fazer login");
+      return;
+    }
+
+    localStorage.setItem("token", data.token);
+    window.location.href = "/";
   } catch (err) {
     console.error(err);
     alert("Erro de conexão");
