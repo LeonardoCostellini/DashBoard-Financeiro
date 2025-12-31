@@ -72,9 +72,6 @@ async function carregarTransacoes() {
   atualizarResumo();
 }
 
-Number(t.valor)
-
-
 // =======================
 // CRIAR TRANSAÇÃO
 // =======================
