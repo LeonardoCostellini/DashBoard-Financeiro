@@ -41,8 +41,21 @@ async function register() {
 }
 
 async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("senha").value;
+  const emailInput = document.getElementById("email");
+  const senhaInput = document.getElementById("senha");
+
+  if (!emailInput || !senhaInput) {
+    alert("Campos de login não encontrados");
+    return;
+  }
+
+  const email = emailInput.value;
+  const password = senhaInput.value;
+
+  if (!email || !password) {
+    alert("Preencha email e senha");
+    return;
+  }
 
   const res = await fetch("/api/auth/login", {
     method: "POST",
