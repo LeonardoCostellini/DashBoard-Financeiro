@@ -50,10 +50,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Dados inválidos" });
     }
 
+    const tipoFinal =
+  tipo.toLowerCase() === "entrada" ? "ENTRADA" : "SAIDA";
+
+
     // 🧠 INSERT
     await pool.query(
       `
-      INSERT INTO transactions (user_id, valor, tipo, categoria, data)
+      INSERT INTO transactions ([userId, valor, tipoFinal, categoria, data])
       VALUES ($1, $2, $3, $4, $5)
       `,
       [userId, valor, tipo, categoria, data]
