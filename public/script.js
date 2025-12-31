@@ -255,3 +255,33 @@ function atualizarGrafico() {
     }
   });
 }
+
+async function carregarCategorias() {
+  const res = await fetch("/api/categories/list", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const categorias = await res.json();
+  const select = document.getElementById("categoria");
+
+  select.innerHTML = "<option value=''>Selecione</option>";
+
+  categorias.forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat.nome;
+    opt.textContent = cat.nome;
+    select.appendChild(opt);
+  });
+}
+
+function renderMeta(meta) {
+  return `
+    <div class="bg-white p-4 rounded shadow mb-2">
+      <h3>${meta.nome}</h3>
+      <p>R$ ${meta.valor_atual} / R$ ${meta.valor_total}</p>
+      <div class="w-full bg-gray-200 h-3 rounded">
+        <div class="bg-green-500 h-3 rounded" style="width:${meta.progresso}%"></div>
+      </div>
+    </div>
+  `;
+}
