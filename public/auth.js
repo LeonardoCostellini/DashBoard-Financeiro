@@ -1,34 +1,65 @@
-async function register() {
-  await fetch("/api/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: document.getElementById("email").value,
-      password: document.getElementById("password").value
-    })
-  });
-
-  alert("Conta criada!");
-  location.href = "/login.html";
-}
-
 async function login() {
-  const res = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: document.getElementById("email").value,
-      password: document.getElementById("password").value
-    })
-  });
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("senha").value;
 
-  if (!res.ok) {
-    alert("Login inválido");
+  if (!email || !password) {
+    alert("Preencha email e senha");
     return;
   }
 
-  const data = await res.json();
-  localStorage.setItem("token", data.token);
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password })
+    });
 
-  location.href = "/";
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Erro ao fazer login");
+      return;
+    }
+
+    localStorage.setItem("token", data.token);
+    window.location.href = "/";
+  } catch (err) {
+    console.error(err);
+    alert("Erro de conexão");
+  }
+}
+
+async function register() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("senha").value;
+
+  if (!email || !password) {
+    alert("Preencha email e senha");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Erro ao criar conta");
+      return;
+    }
+
+    alert("Conta criada com sucesso!");
+    window.location.href = "/login.html";
+  } catch (err) {
+    console.error(err);
+    alert("Erro de conexão");
+  }
 }
