@@ -18,6 +18,9 @@ const categoriaSelect = document.getElementById('categoria');
 const tipoSelect = document.getElementById('tipo');
 const filtroMes = document.getElementById('filtro-mes');
 
+let transacoes = [];
+let chartCombinado = null; // 🔥 FALTAVA ISSO
+
 // =======================
 // UTILS
 // =======================
@@ -258,26 +261,29 @@ filtroMes.addEventListener('change', () => {
 
 function atualizarGrafico() {
   const canvas = document.getElementById("grafico");
-  if (!canvas) return; // ⛑️ evita erro
+  if (!canvas) return;
 
-  let entrada = 0, saida = 0;
-  const mes = filtroMes.value;
+  const ctx = canvas.getContext("2d");
+
+  let entrada = 0;
+  let saida = 0;
 
   transacoes.forEach(t => {
-    if (!mes || t.data.startsWith(mes)) {
-      t.tipo === "entrada"
-        ? entrada += Number(t.valor)
-        : saida += Number(t.valor);
-    }
+    if (t.tipo === "entrada") entrada += Number(t.valor);
+    else saida += Number(t.valor);
   });
 
-  if (chartCombinado) chartCombinado.destroy();
+  if (chartCombinado) {
+    chartCombinado.destroy();
+  }
 
-  chartCombinado = new Chart(canvas.getContext("2d"), {
+  chartCombinado = new Chart(ctx, {
     type: "doughnut",
     data: {
       labels: ["Entradas", "Saídas"],
-      datasets: [{ data: [entrada, saida] }]
+      datasets: [{
+        data: [entrada, saida]
+      }]
     }
   });
 }
