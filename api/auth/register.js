@@ -1,13 +1,14 @@
-import bcrypt from "bcryptjs";
 import { Pool } from "pg";
+import bcrypt from "bcryptjs";
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).end();
+    return res.status(405).json({ error: "Método não permitido" });
   }
 
   const { email, password } = req.body;
@@ -17,6 +18,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    // HASH CORRETO
     const hash = await bcrypt.hash(password, 10);
 
     await pool.query(
@@ -24,9 +26,15 @@ export default async function handler(req, res) {
       [email, hash]
     );
 
-    res.status(201).json({ ok: true });
+    return res.json({ success: true });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Erro ao criar usuário" });
+
+    if (err.code === "23505") {
+      return res.status(409).json({ error: "Usuário já existe" });
+    }
+
+    return res.status(500).json({ error: "Erro ao criar usuário" });
   }
 }
