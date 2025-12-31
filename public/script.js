@@ -1,5 +1,6 @@
 console.log('Chart.js carregado?', typeof Chart !== 'undefined');
 
+
 // =======================
 // AUTH
 // =======================
@@ -17,7 +18,6 @@ const saldo = document.getElementById('saldo');
 const categoriaSelect = document.getElementById('categoria');
 const tipoSelect = document.getElementById('tipo');
 const filtroMes = document.getElementById('filtro-mes');
-const listaMetas = document.getElementById("lista-metas");
 
 let transacoes = [];
 let chartCombinado = null;
@@ -37,9 +37,48 @@ function formatarBrasileiro(v) {
   });
 }
 
+
 // =======================
-// CATEGORIAS (BANCO)
+// CATEGORIAS
 // =======================
+const categorias = {
+  entrada: [
+    'Salário',
+    'Bonificação',
+    'Vale Alimentação',
+    'Dinheiro Emprestado',
+    '13°'
+  ],
+  saida: [
+    'MORADIA (ALUGUEL/FINANCIAMENTO)',
+    'CONDOMÍNIO',
+    'SUPERMERCADO (VALOR MÉDIO)',
+    'LUZ (INCLUSO NO CONDOMÍNIO?)',
+    'GÁS (INCLUSO NO CONDOMÍNIO?)',
+    'IPTU (INCLUSO NO CONDOMÍNIO?)',
+    'PLANO DE SAÚDE',
+    'SEGURO DE VIDA',
+    'INVESTIMENTOS',
+    'FALCULDADE',
+    'RESERVA DE EMERGENCIA',
+    'CARTÃO DE CRÉDITO',
+    'COMBUSTÍVEL',
+    'UNIMED',
+    'GASTOS COM ANIMAIS',
+    'GASTOS IMPREVISTOS',
+    'GASTOS COM TRANSPORTE',
+    'GASTOS COM VEÍCULO',
+    'INTERNET RESIDENCIAL',
+    'ASSINATURAS(EX:NETFLIX)',
+    'PADARIA/FEIRA',
+    'SAÍDAS/CINEMA/LAZER',
+    'CABELEIRO',
+    'TARIFAS BANCÁRIAS',
+    'TELEFONIA/CELULAR'
+  ]
+
+};
+
 async function atualizarCategorias() {
   const res = await fetch("/api/categories/list", {
     headers: { Authorization: "Bearer " + token }
@@ -60,21 +99,20 @@ async function atualizarCategorias() {
     });
 }
 
-// =======================
-// TRANSAÇÕES
-// =======================
 async function carregarTransacoes() {
   const res = await fetch("/api/transactions/list", {
     headers: { Authorization: "Bearer " + token }
   });
 
+  const data = await res.json();
   if (!res.ok) return;
 
-  transacoes = await res.json();
+  transacoes = data;
   renderizarTransacoes();
   atualizarResumo();
-  atualizarGrafico();
+  atualizarGrafico(); // ⬅️ aqui
 }
+
 
 // =======================
 // CRIAR TRANSAÇÃO
@@ -82,11 +120,20 @@ async function carregarTransacoes() {
 form.addEventListener('submit', async e => {
   e.preventDefault();
 
-  const valor = parseValorBrasileiro(document.getElementById("valor").value);
-  if (isNaN(valor)) return alert("Valor inválido");
+  const valorInput = document.getElementById("valor").value;
+  const valor = parseValorBrasileiro(valorInput);
+
+  if (isNaN(valor)) {
+    alert("Valor inválido");
+    return;
+  }
 
   let data = form.data.value;
-  if (data.length === 7) data += "-01";
+
+  // 🔧 Converte YYYY-MM → YYYY-MM-01
+  if (data.length === 7) {
+    data = data + "-01";
+  }
 
   const payload = {
     valor,
@@ -99,22 +146,26 @@ form.addEventListener('submit', async e => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + token
+      "Authorization": "Bearer " + token
     },
     body: JSON.stringify(payload)
   });
 
+  const response = await res.json();
+  console.log("API:", response);
+
   if (!res.ok) {
-    const err = await res.json();
-    return alert(err.error || "Erro ao salvar");
+    alert(response.error || "Erro ao salvar");
+    return;
   }
 
   form.reset();
   carregarTransacoes();
 });
 
+
 // =======================
-// RENDER TRANSAÇÕES
+// RENDER
 // =======================
 function renderizarTransacoes() {
   lista.innerHTML = '';
@@ -124,39 +175,59 @@ function renderizarTransacoes() {
     if (!mes || t.data.startsWith(mes)) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${formatarBrasileiro(t.valor)}</td>
+        <td>${formatarBrasileiro(Number(t.valor))}</td>
         <td>${t.tipo}</td>
         <td>${t.categoria}</td>
         <td>${t.data}</td>
         <td>
-          <button class="bg-red-500 text-white px-3 py-1 rounded">
+          <button
+            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+            data-id="${t.id}"
+          >
             Excluir
           </button>
         </td>
       `;
 
-      tr.querySelector("button")
-        .addEventListener("click", () => excluirTransacao(t.id));
+      const btn = tr.querySelector("button");
+      btn.addEventListener("click", () => excluirTransacao(t.id));
 
       lista.appendChild(tr);
     }
   });
 }
 
+
 // =======================
-// EXCLUIR TRANSAÇÃO
+// EXCLUIR
 // =======================
+
 async function excluirTransacao(id) {
   if (!confirm("Excluir transação?")) return;
 
   const res = await fetch(`/api/transactions/delete?id=${id}`, {
     method: "DELETE",
-    headers: { Authorization: "Bearer " + token }
+    headers: {
+      Authorization: "Bearer " + token
+    }
   });
 
-  if (!res.ok) return alert("Erro ao excluir");
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    alert("Erro inesperado no servidor");
+    return;
+  }
+
+  if (!res.ok) {
+    alert(data.error || "Erro ao excluir");
+    return;
+  }
 
   carregarTransacoes();
+  atualizarGrafico();
+
 }
 
 // =======================
@@ -168,7 +239,7 @@ function atualizarResumo() {
 
   transacoes.forEach(t => {
     if (!mes || t.data.startsWith(mes)) {
-      t.tipo === "entrada" ? ent += t.valor : sai += t.valor;
+      t.tipo === 'entrada' ? ent += t.valor : sai += t.valor;
     }
   });
 
@@ -178,99 +249,116 @@ function atualizarResumo() {
 }
 
 // =======================
-// GRÁFICO
-// =======================
-function atualizarGrafico() {
-  const canvas = document.getElementById("graficoCombinado");
-  if (!canvas) return;
-
-  const ctx = canvas.getContext("2d");
-  const map = {};
-
-  transacoes.forEach(t => {
-    if (!map[t.categoria]) map[t.categoria] = { entrada: 0, saida: 0 };
-    map[t.categoria][t.tipo] += t.valor;
-  });
-
-  if (chartCombinado) chartCombinado.destroy();
-
-  chartCombinado = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: Object.keys(map),
-      datasets: [
-        { label: "Entradas", data: Object.values(map).map(v => v.entrada) },
-        { label: "Saídas", data: Object.values(map).map(v => v.saida) }
-      ]
-    },
-    options: { responsive: true }
-  });
-}
-
-// =======================
-// METAS
-// =======================
-function renderMeta(meta) {
-  const progresso = Math.min(
-    Math.round((meta.valor_atual / meta.valor_total) * 100),
-    100
-  );
-
-  return `
-    <div class="bg-white p-4 rounded shadow mb-3">
-      <h3 class="font-semibold">${meta.nome}</h3>
-      <p>${formatarBrasileiro(meta.valor_atual)} / ${formatarBrasileiro(meta.valor_total)}</p>
-      <div class="w-full bg-gray-200 h-3 rounded">
-        <div class="bg-green-500 h-3 rounded" style="width:${progresso}%"></div>
-      </div>
-    </div>
-  `;
-}
-
-async function carregarMetas() {
-  const res = await fetch("/api/metas/list", {
-    headers: { Authorization: "Bearer " + token }
-  });
-
-  if (!res.ok) return;
-
-  const metas = await res.json();
-  listaMetas.innerHTML = "";
-  metas.forEach(m => listaMetas.innerHTML += renderMeta(m));
-}
-
-document.getElementById("form-meta").addEventListener("submit", async e => {
-  e.preventDefault();
-
-  const nome = document.getElementById("meta-nome").value;
-  const valor_total = parseValorBrasileiro(document.getElementById("meta-valor").value);
-
-  const res = await fetch("/api/metas/create", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
-    body: JSON.stringify({ nome, valor_total })
-  });
-
-  if (!res.ok) return alert("Erro ao criar meta");
-
-  e.target.reset();
-  carregarMetas();
-});
-
-// =======================
 // INIT
 // =======================
 document.addEventListener("DOMContentLoaded", () => {
   atualizarCategorias();
   carregarTransacoes();
-  carregarMetas();
 });
 
-tipoSelect.addEventListener("change", atualizarCategorias);
-filtroMes.addEventListener("change", () => {
+tipoSelect.addEventListener('change', atualizarCategorias);
+filtroMes.addEventListener('change', () => {
   renderizarTransacoes();
   atualizarResumo();
 });
+
+function atualizarGrafico() {
+  const canvas = document.getElementById("graficoCombinado");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+
+  // Agrupar por categoria
+  const categorias = {};
+
+  transacoes.forEach(t => {
+    if (!categorias[t.categoria]) {
+      categorias[t.categoria] = { entrada: 0, saida: 0 };
+    }
+
+    if (t.tipo === "entrada") {
+      categorias[t.categoria].entrada += Number(t.valor);
+    } else {
+      categorias[t.categoria].saida += Number(t.valor);
+    }
+  });
+
+  const labels = Object.keys(categorias);
+  const entradas = labels.map(cat => categorias[cat].entrada);
+  const saidas = labels.map(cat => categorias[cat].saida);
+
+  if (chartCombinado) {
+    chartCombinado.destroy();
+  }
+
+  chartCombinado = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Entradas",
+          data: entradas,
+          backgroundColor: "rgba(34,197,94,0.7)"
+        },
+        {
+          label: "Saídas",
+          data: saidas,
+          backgroundColor: "rgba(239,68,68,0.7)"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top"
+        },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              return ctx.dataset.label + ": " +
+                ctx.raw.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL"
+                });
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: value =>
+              value.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL"
+              })
+          }
+        }
+      }
+    }
+  });
+}
+
+
+
+async function carregarCategorias() {
+  const res = await fetch("/api/categories/list", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const categorias = await res.json();
+  const select = document.getElementById("categoria");
+
+  select.innerHTML = "<option value=''>Selecione</option>";
+
+  categorias.forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat.nome;
+    opt.textContent = cat.nome;
+    select.appendChild(opt);
+  });
+}
+
+
