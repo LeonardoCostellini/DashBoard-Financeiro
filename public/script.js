@@ -138,13 +138,23 @@ function renderizarTransacoes() {
         <td>${t.categoria}</td>
         <td>${t.data}</td>
         <td>
-          <button onclick="excluirTransacao(${t.id})">Excluir</button>
+          <button
+            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+            data-id="${t.id}"
+          >
+            Excluir
+          </button>
         </td>
       `;
+
+      const btn = tr.querySelector("button");
+      btn.addEventListener("click", () => excluirTransacao(t.id));
+
       lista.appendChild(tr);
     }
   });
 }
+
 
 // =======================
 // EXCLUIR
@@ -152,10 +162,19 @@ function renderizarTransacoes() {
 async function excluirTransacao(id) {
   if (!confirm("Excluir transação?")) return;
 
-  await fetch(`/api/transactions/delete?id=${id}`, {
+  const res = await fetch(`/api/transactions/delete?id=${id}`, {
     method: "DELETE",
-    headers: { Authorization: "Bearer " + token }
+    headers: {
+      Authorization: "Bearer " + token
+    }
   });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.error || "Erro ao excluir");
+    return;
+  }
 
   carregarTransacoes();
 }
@@ -191,3 +210,41 @@ filtroMes.addEventListener('change', () => {
   renderizarTransacoes();
   atualizarResumo();
 });
+
+function atualizarGrafico() {
+  const mes = filtroMes.value;
+
+  let entrada = 0;
+  let saida = 0;
+
+  transacoes.forEach(t => {
+    if (!mes || t.data.startsWith(mes)) {
+      if (t.tipo === "entrada") entrada += Number(t.valor);
+      else saida += Number(t.valor);
+    }
+  });
+
+  const ctx = document.getElementById("grafico").getContext("2d");
+
+  if (chartCombinado) {
+    chartCombinado.destroy();
+  }
+
+  chartCombinado = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["Entradas", "Saídas"],
+      datasets: [{
+        data: [entrada, saida]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "bottom"
+        }
+      }
+    }
+  });
+}
