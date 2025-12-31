@@ -1,6 +1,5 @@
 console.log('Chart.js carregado?', typeof Chart !== 'undefined');
 
-
 // =======================
 // AUTH
 // =======================
@@ -18,6 +17,7 @@ const saldo = document.getElementById('saldo');
 const categoriaSelect = document.getElementById('categoria');
 const tipoSelect = document.getElementById('tipo');
 const filtroMes = document.getElementById('filtro-mes');
+const listaMetas = document.getElementById("lista-metas");
 
 let transacoes = [];
 let chartCombinado = null;
@@ -37,48 +37,9 @@ function formatarBrasileiro(v) {
   });
 }
 
-
 // =======================
-// CATEGORIAS
+// CATEGORIAS (BANCO)
 // =======================
-const categorias = {
-  entrada: [
-    'Salário',
-    'Bonificação',
-    'Vale Alimentação',
-    'Dinheiro Emprestado',
-    '13°'
-  ],
-  saida: [
-    'MORADIA (ALUGUEL/FINANCIAMENTO)',
-    'CONDOMÍNIO',
-    'SUPERMERCADO (VALOR MÉDIO)',
-    'LUZ (INCLUSO NO CONDOMÍNIO?)',
-    'GÁS (INCLUSO NO CONDOMÍNIO?)',
-    'IPTU (INCLUSO NO CONDOMÍNIO?)',
-    'PLANO DE SAÚDE',
-    'SEGURO DE VIDA',
-    'INVESTIMENTOS',
-    'FALCULDADE',
-    'RESERVA DE EMERGENCIA',
-    'CARTÃO DE CRÉDITO',
-    'COMBUSTÍVEL',
-    'UNIMED',
-    'GASTOS COM ANIMAIS',
-    'GASTOS IMPREVISTOS',
-    'GASTOS COM TRANSPORTE',
-    'GASTOS COM VEÍCULO',
-    'INTERNET RESIDENCIAL',
-    'ASSINATURAS(EX:NETFLIX)',
-    'PADARIA/FEIRA',
-    'SAÍDAS/CINEMA/LAZER',
-    'CABELEIRO',
-    'TARIFAS BANCÁRIAS',
-    'TELEFONIA/CELULAR'
-  ]
-
-};
-
 async function atualizarCategorias() {
   const res = await fetch("/api/categories/list", {
     headers: { Authorization: "Bearer " + token }
@@ -99,20 +60,21 @@ async function atualizarCategorias() {
     });
 }
 
+// =======================
+// TRANSAÇÕES
+// =======================
 async function carregarTransacoes() {
   const res = await fetch("/api/transactions/list", {
     headers: { Authorization: "Bearer " + token }
   });
 
-  const data = await res.json();
   if (!res.ok) return;
 
-  transacoes = data;
+  transacoes = await res.json();
   renderizarTransacoes();
   atualizarResumo();
-  atualizarGrafico(); // ⬅️ aqui
+  atualizarGrafico();
 }
-
 
 // =======================
 // CRIAR TRANSAÇÃO
@@ -120,20 +82,11 @@ async function carregarTransacoes() {
 form.addEventListener('submit', async e => {
   e.preventDefault();
 
-  const valorInput = document.getElementById("valor").value;
-  const valor = parseValorBrasileiro(valorInput);
-
-  if (isNaN(valor)) {
-    alert("Valor inválido");
-    return;
-  }
+  const valor = parseValorBrasileiro(document.getElementById("valor").value);
+  if (isNaN(valor)) return alert("Valor inválido");
 
   let data = form.data.value;
-
-  // 🔧 Converte YYYY-MM → YYYY-MM-01
-  if (data.length === 7) {
-    data = data + "-01";
-  }
+  if (data.length === 7) data += "-01";
 
   const payload = {
     valor,
@@ -146,26 +99,22 @@ form.addEventListener('submit', async e => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
+      Authorization: "Bearer " + token
     },
     body: JSON.stringify(payload)
   });
 
-  const response = await res.json();
-  console.log("API:", response);
-
   if (!res.ok) {
-    alert(response.error || "Erro ao salvar");
-    return;
+    const err = await res.json();
+    return alert(err.error || "Erro ao salvar");
   }
 
   form.reset();
   carregarTransacoes();
 });
 
-
 // =======================
-// RENDER
+// RENDER TRANSAÇÕES
 // =======================
 function renderizarTransacoes() {
   lista.innerHTML = '';
@@ -175,59 +124,39 @@ function renderizarTransacoes() {
     if (!mes || t.data.startsWith(mes)) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${formatarBrasileiro(Number(t.valor))}</td>
+        <td>${formatarBrasileiro(t.valor)}</td>
         <td>${t.tipo}</td>
         <td>${t.categoria}</td>
         <td>${t.data}</td>
         <td>
-          <button
-            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-            data-id="${t.id}"
-          >
+          <button class="bg-red-500 text-white px-3 py-1 rounded">
             Excluir
           </button>
         </td>
       `;
 
-      const btn = tr.querySelector("button");
-      btn.addEventListener("click", () => excluirTransacao(t.id));
+      tr.querySelector("button")
+        .addEventListener("click", () => excluirTransacao(t.id));
 
       lista.appendChild(tr);
     }
   });
 }
 
-
 // =======================
-// EXCLUIR
+// EXCLUIR TRANSAÇÃO
 // =======================
-
 async function excluirTransacao(id) {
   if (!confirm("Excluir transação?")) return;
 
   const res = await fetch(`/api/transactions/delete?id=${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: "Bearer " + token
-    }
+    headers: { Authorization: "Bearer " + token }
   });
 
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    alert("Erro inesperado no servidor");
-    return;
-  }
-
-  if (!res.ok) {
-    alert(data.error || "Erro ao excluir");
-    return;
-  }
+  if (!res.ok) return alert("Erro ao excluir");
 
   carregarTransacoes();
-  atualizarGrafico();
-
 }
 
 // =======================
@@ -239,7 +168,7 @@ function atualizarResumo() {
 
   transacoes.forEach(t => {
     if (!mes || t.data.startsWith(mes)) {
-      t.tipo === 'entrada' ? ent += t.valor : sai += t.valor;
+      t.tipo === "entrada" ? ent += t.valor : sai += t.valor;
     }
   });
 
@@ -249,148 +178,38 @@ function atualizarResumo() {
 }
 
 // =======================
-// INIT
+// GRÁFICO
 // =======================
-document.addEventListener("DOMContentLoaded", () => {
-  atualizarCategorias();
-  carregarTransacoes();
-});
-
-tipoSelect.addEventListener('change', atualizarCategorias);
-filtroMes.addEventListener('change', () => {
-  renderizarTransacoes();
-  atualizarResumo();
-});
-
 function atualizarGrafico() {
   const canvas = document.getElementById("graficoCombinado");
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
-
-  // Agrupar por categoria
-  const categorias = {};
+  const map = {};
 
   transacoes.forEach(t => {
-    if (!categorias[t.categoria]) {
-      categorias[t.categoria] = { entrada: 0, saida: 0 };
-    }
-
-    if (t.tipo === "entrada") {
-      categorias[t.categoria].entrada += Number(t.valor);
-    } else {
-      categorias[t.categoria].saida += Number(t.valor);
-    }
+    if (!map[t.categoria]) map[t.categoria] = { entrada: 0, saida: 0 };
+    map[t.categoria][t.tipo] += t.valor;
   });
 
-  const labels = Object.keys(categorias);
-  const entradas = labels.map(cat => categorias[cat].entrada);
-  const saidas = labels.map(cat => categorias[cat].saida);
-
-  if (chartCombinado) {
-    chartCombinado.destroy();
-  }
+  if (chartCombinado) chartCombinado.destroy();
 
   chartCombinado = new Chart(ctx, {
     type: "bar",
     data: {
-      labels,
+      labels: Object.keys(map),
       datasets: [
-        {
-          label: "Entradas",
-          data: entradas,
-          backgroundColor: "rgba(34,197,94,0.7)"
-        },
-        {
-          label: "Saídas",
-          data: saidas,
-          backgroundColor: "rgba(239,68,68,0.7)"
-        }
+        { label: "Entradas", data: Object.values(map).map(v => v.entrada) },
+        { label: "Saídas", data: Object.values(map).map(v => v.saida) }
       ]
     },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: "top"
-        },
-        tooltip: {
-          callbacks: {
-            label: function (ctx) {
-              return ctx.dataset.label + ": " +
-                ctx.raw.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL"
-                });
-            }
-          }
-        }
-      },
-      scales: {
-        y: {
-          ticks: {
-            callback: value =>
-              value.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL"
-              })
-          }
-        }
-      }
-    }
+    options: { responsive: true }
   });
 }
 
-
-
-async function carregarCategorias() {
-  const res = await fetch("/api/categories/list", {
-    headers: { Authorization: "Bearer " + token }
-  });
-
-  const categorias = await res.json();
-  const select = document.getElementById("categoria");
-
-  select.innerHTML = "<option value=''>Selecione</option>";
-
-  categorias.forEach(cat => {
-    const opt = document.createElement("option");
-    opt.value = cat.nome;
-    opt.textContent = cat.nome;
-    select.appendChild(opt);
-  });
-}
-
-btnAddMeta.addEventListener("click", async () => {
-  const nome = document.getElementById("nomeMeta").value;
-  const valor_total = parseValorBrasileiro(
-    document.getElementById("valorMeta").value
-  );
-  const valor_atual = parseValorBrasileiro(
-    document.getElementById("valorAtualMeta").value
-  );
-
-  if (!nome || isNaN(valor_total)) {
-    alert("Preencha corretamente a meta");
-    return;
-  }
-
-  await fetch("/api/metas/create", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
-    body: JSON.stringify({ nome, valor_total, valor_atual })
-  });
-
-  document.getElementById("nomeMeta").value = "";
-  document.getElementById("valorMeta").value = "";
-  document.getElementById("valorAtualMeta").value = "";
-
-  carregarMetas();
-});
-
+// =======================
+// METAS
+// =======================
 function renderMeta(meta) {
   const progresso = Math.min(
     Math.round((meta.valor_atual / meta.valor_total) * 100),
@@ -400,22 +219,13 @@ function renderMeta(meta) {
   return `
     <div class="bg-white p-4 rounded shadow mb-3">
       <h3 class="font-semibold">${meta.nome}</h3>
-
-      <p class="text-sm mb-1">
-        ${formatarBrasileiro(meta.valor_atual)} /
-        ${formatarBrasileiro(meta.valor_total)}
-      </p>
-
+      <p>${formatarBrasileiro(meta.valor_atual)} / ${formatarBrasileiro(meta.valor_total)}</p>
       <div class="w-full bg-gray-200 h-3 rounded">
-        <div
-          class="bg-green-500 h-3 rounded transition-all"
-          style="width:${progresso}%"
-        ></div>
+        <div class="bg-green-500 h-3 rounded" style="width:${progresso}%"></div>
       </div>
     </div>
   `;
 }
-
 
 async function carregarMetas() {
   const res = await fetch("/api/metas/list", {
@@ -426,19 +236,14 @@ async function carregarMetas() {
 
   const metas = await res.json();
   listaMetas.innerHTML = "";
-
-  metas.forEach(meta => {
-    listaMetas.innerHTML += renderMeta(meta);
-  });
+  metas.forEach(m => listaMetas.innerHTML += renderMeta(m));
 }
 
 document.getElementById("form-meta").addEventListener("submit", async e => {
   e.preventDefault();
 
   const nome = document.getElementById("meta-nome").value;
-  const valor_total = parseValorBrasileiro(
-    document.getElementById("meta-valor").value
-  );
+  const valor_total = parseValorBrasileiro(document.getElementById("meta-valor").value);
 
   const res = await fetch("/api/metas/create", {
     method: "POST",
@@ -449,13 +254,23 @@ document.getElementById("form-meta").addEventListener("submit", async e => {
     body: JSON.stringify({ nome, valor_total })
   });
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    alert(data.error || "Erro ao criar meta");
-    return;
-  }
+  if (!res.ok) return alert("Erro ao criar meta");
 
   e.target.reset();
   carregarMetas();
+});
+
+// =======================
+// INIT
+// =======================
+document.addEventListener("DOMContentLoaded", () => {
+  atualizarCategorias();
+  carregarTransacoes();
+  carregarMetas();
+});
+
+tipoSelect.addEventListener("change", atualizarCategorias);
+filtroMes.addEventListener("change", () => {
+  renderizarTransacoes();
+  atualizarResumo();
 });
