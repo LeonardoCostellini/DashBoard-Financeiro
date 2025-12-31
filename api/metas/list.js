@@ -1,26 +1,19 @@
 import jwt from "jsonwebtoken";
-import pkg from "pg";
-const { Pool } = pkg;
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+import { sql } from "@vercel/postgres";
 
 export default async function handler(req, res) {
-  if (req.method !== "GET") return res.status(405).end();
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "Sem token" });
 
-  try {
-    const token = req.headers.authorization?.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const user = jwt.verify(token, process.env.JWT_SECRET);
 
-    const { rows } = await pool.query(
-      "SELECT *, (valor_atual/valor_total)*100 AS progresso FROM metas WHERE user_id=$1",
-      [decoded.userId]
-    );
+  const metas = await sql`
+    SELECT *,
+    ROUND((valor_atual / valor_total) * 100) AS progresso
+    FROM metas
+    WHERE user_id = ${user.id}
+    ORDER BY id DESC
+  `;
 
-    res.json(rows);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  res.json(metas.rows);
 }

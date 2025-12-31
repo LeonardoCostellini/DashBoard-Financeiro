@@ -391,6 +391,31 @@ btnAddMeta.addEventListener("click", async () => {
   carregarMetas();
 });
 
+function renderMeta(meta) {
+  const progresso = Math.min(
+    Math.round((meta.valor_atual / meta.valor_total) * 100),
+    100
+  );
+
+  return `
+    <div class="bg-white p-4 rounded shadow mb-3">
+      <h3 class="font-semibold">${meta.nome}</h3>
+
+      <p class="text-sm mb-1">
+        ${formatarBrasileiro(meta.valor_atual)} /
+        ${formatarBrasileiro(meta.valor_total)}
+      </p>
+
+      <div class="w-full bg-gray-200 h-3 rounded">
+        <div
+          class="bg-green-500 h-3 rounded transition-all"
+          style="width:${progresso}%"
+        ></div>
+      </div>
+    </div>
+  `;
+}
+
 
 async function carregarMetas() {
   const res = await fetch("/api/metas/list", {
@@ -407,9 +432,30 @@ async function carregarMetas() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  atualizarCategorias();
-  carregarTransacoes();
-  carregarMetas(); // ⬅️ METAS AQUI
-});
+document.getElementById("form-meta").addEventListener("submit", async e => {
+  e.preventDefault();
 
+  const nome = document.getElementById("meta-nome").value;
+  const valor_total = parseValorBrasileiro(
+    document.getElementById("meta-valor").value
+  );
+
+  const res = await fetch("/api/metas/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ nome, valor_total })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.error || "Erro ao criar meta");
+    return;
+  }
+
+  e.target.reset();
+  carregarMetas();
+});
