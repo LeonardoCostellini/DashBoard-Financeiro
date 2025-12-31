@@ -18,9 +18,6 @@ const categoriaSelect = document.getElementById('categoria');
 const tipoSelect = document.getElementById('tipo');
 const filtroMes = document.getElementById('filtro-mes');
 
-let transacoes = [];
-let chartCombinado = null;
-
 // =======================
 // UTILS
 // =======================
@@ -29,11 +26,14 @@ function parseValorBrasileiro(v) {
 }
 
 function formatarBrasileiro(v) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return v.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  });
 }
 
 // =======================
-// CATEGORIAS (LOCAL POR ENQUANTO)
+// CATEGORIAS
 // =======================
 const categorias = {
   entrada: ['Salário', 'Bonificação', 'Vale Alimentação'],
@@ -51,39 +51,58 @@ function atualizarCategorias() {
 }
 
 // =======================
-// CRIAR TRANSAÇÃO (BANCO)
+// CRIAR TRANSAÇÃO
 // =======================
 form.addEventListener('submit', async e => {
   e.preventDefault();
 
-  const payload = {
-    valor: parseValorBrasileiro(form.valor.value),
-    tipo: form.tipo.value,
-    categoria: form.categoria.value,
-    data: form.data.value
-  };
+  const valorInput = document.getElementById("valor").value;
+  const valor = parseValorBrasileiro(valorInput);
 
-  const res = await fetch("/api/transactions/create", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!res.ok) {
-    alert("Erro ao salvar transação");
+  if (isNaN(valor)) {
+    alert("Valor inválido");
     return;
   }
 
-  form.reset();
-  carregarTransacoes();
+  const payload = {
+    valor,
+    tipo: tipoSelect.value,
+    categoria: categoriaSelect.value,
+    data: form.data.value
+  };
+
+  try {
+    const res = await fetch("/api/transactions/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    console.log("API:", data);
+
+    if (!res.ok) {
+      alert(data.error || "Erro ao salvar transação");
+      return;
+    }
+
+    form.reset();
+    carregarTransacoes();
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro de conexão");
+  }
 });
 
 // =======================
-// LISTAR TRANSAÇÕES (BANCO)
+// LISTAR TRANSAÇÕES
 // =======================
+let transacoes = [];
+
 async function carregarTransacoes() {
   const res = await fetch("/api/transactions/list", {
     headers: { Authorization: "Bearer " + token }
@@ -117,7 +136,7 @@ function renderizarTransacoes() {
         <td>${t.categoria}</td>
         <td>${t.data}</td>
         <td>
-          <button onclick="excluirTransacao('${t.id}')">Excluir</button>
+          <button onclick="excluirTransacao(${t.id})">Excluir</button>
         </td>
       `;
       lista.appendChild(tr);
@@ -126,7 +145,7 @@ function renderizarTransacoes() {
 }
 
 // =======================
-// EXCLUIR (BANCO)
+// EXCLUIR
 // =======================
 async function excluirTransacao(id) {
   if (!confirm("Excluir transação?")) return;
