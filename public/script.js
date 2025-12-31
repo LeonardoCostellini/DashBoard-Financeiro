@@ -361,4 +361,139 @@ async function carregarCategorias() {
   });
 }
 
+// =======================
+// METAS (BANCO)
+// =======================
+async function carregarMetas() {
+  const res = await fetch("/api/metas/list", {
+    headers: { Authorization: "Bearer " + token }
+  });
 
+  if (!res.ok) return;
+
+  const metas = await res.json();
+  const container = document.getElementById("listaMetas");
+  container.innerHTML = "";
+
+  metas.forEach(meta => {
+    container.innerHTML += renderizarMeta(meta);
+  });
+}
+
+function renderizarMeta(meta) {
+  const perc = Math.min(
+    (meta.valor_atual / meta.valor_total) * 100,
+    100
+  ).toFixed(1);
+
+  const concluida = meta.valor_atual >= meta.valor_total;
+
+  let cor = "#f97316";
+  if (perc >= 50) cor = "#eab308";
+  if (perc >= 100) cor = "#22c55e";
+
+  return `
+    <div class="mb-6 p-4 bg-white shadow-md rounded-lg">
+      <h4 class="text-lg font-bold mb-1">${meta.nome}</h4>
+
+      <p class="text-sm text-gray-700 mb-2">
+        ${formatarBrasileiro(meta.valor_atual)} de ${formatarBrasileiro(meta.valor_total)}
+      </p>
+
+      <div class="w-full bg-gray-200 rounded-lg h-6 mt-2 overflow-hidden relative">
+        <div
+          class="h-full flex items-center justify-center text-white text-sm font-semibold transition-all duration-500"
+          style="width:${perc}%; background-color:${cor}; min-width:2rem">
+          ${perc > 0 ? `${perc}%` : ""}
+        </div>
+        ${perc == 0 ? `<span class="absolute left-2 text-sm text-gray-500">0%</span>` : ""}
+      </div>
+
+      ${
+        concluida
+          ? `
+          <p class="text-green-600 font-bold mt-2">🎉 Parabéns! Meta alcançada!</p>
+          <button onclick="finalizarMeta(${meta.id})"
+            class="mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded">
+            Finalizar Meta
+          </button>
+        `
+          : `
+          <div class="mt-3 flex gap-2">
+            <input
+              type="text"
+              placeholder="Novo valor"
+              id="novaMeta-${meta.id}"
+              class="border border-gray-300 rounded px-2 py-1 w-full"
+            />
+            <button onclick="atualizarMeta(${meta.id})"
+              class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded">
+              Atualizar
+            </button>
+          </div>
+        `
+      }
+    </div>
+  `;
+}
+
+
+document.getElementById("btnAddMeta").addEventListener("click", async () => {
+  const nome = document.getElementById("nomeMeta").value.trim();
+  const valor_total = parseValorBrasileiro(document.getElementById("valorMeta").value);
+  const valor_atual = parseValorBrasileiro(document.getElementById("valorAtualMeta").value);
+
+  if (!nome || isNaN(valor_total) || isNaN(valor_atual)) {
+    alert("Preencha os dados corretamente.");
+    return;
+  }
+
+  const res = await fetch("/api/metas/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ nome, valor_total, valor_atual })
+  });
+
+  if (!res.ok) return alert("Erro ao criar meta");
+
+  document.getElementById("nomeMeta").value = "";
+  document.getElementById("valorMeta").value = "";
+  document.getElementById("valorAtualMeta").value = "";
+
+  carregarMetas();
+});
+
+async function atualizarMeta(id) {
+  const input = document.getElementById(`novaMeta-${id}`).value;
+  const valor = parseValorBrasileiro(input);
+
+  if (isNaN(valor) || valor <= 0) {
+    alert("Valor inválido");
+    return;
+  }
+
+  await fetch("/api/metas/update", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ id, valor })
+  });
+
+  carregarMetas();
+}
+
+async function finalizarMeta(id) {
+  if (!confirm("Deseja finalizar esta meta?")) return;
+
+  await fetch(`/api/metas/delete?id=${id}`, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  carregarMetas();
+}
