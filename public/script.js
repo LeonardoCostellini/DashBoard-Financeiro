@@ -1,5 +1,6 @@
 console.log('Chart.js carregado?', typeof Chart !== 'undefined');
 
+
 // =======================
 // AUTH
 // =======================
@@ -19,7 +20,7 @@ const tipoSelect = document.getElementById('tipo');
 const filtroMes = document.getElementById('filtro-mes');
 
 let transacoes = [];
-let chartCombinado = null; // 🔥 FALTAVA ISSO
+let chartCombinado = null;
 
 // =======================
 // UTILS
@@ -225,6 +226,8 @@ async function excluirTransacao(id) {
   }
 
   carregarTransacoes();
+  atualizarGrafico();
+
 }
 
 // =======================
@@ -260,33 +263,84 @@ filtroMes.addEventListener('change', () => {
 });
 
 function atualizarGrafico() {
-  const canvas = document.getElementById("grafico");
+  const canvas = document.getElementById("graficoCombinado");
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
 
-  let entrada = 0;
-  let saida = 0;
+  // Agrupar por categoria
+  const categorias = {};
 
   transacoes.forEach(t => {
-    if (t.tipo === "entrada") entrada += Number(t.valor);
-    else saida += Number(t.valor);
+    if (!categorias[t.categoria]) {
+      categorias[t.categoria] = { entrada: 0, saida: 0 };
+    }
+
+    if (t.tipo === "entrada") {
+      categorias[t.categoria].entrada += Number(t.valor);
+    } else {
+      categorias[t.categoria].saida += Number(t.valor);
+    }
   });
+
+  const labels = Object.keys(categorias);
+  const entradas = labels.map(cat => categorias[cat].entrada);
+  const saidas = labels.map(cat => categorias[cat].saida);
 
   if (chartCombinado) {
     chartCombinado.destroy();
   }
 
   chartCombinado = new Chart(ctx, {
-    type: "doughnut",
+    type: "bar",
     data: {
-      labels: ["Entradas", "Saídas"],
-      datasets: [{
-        data: [entrada, saida]
-      }]
+      labels,
+      datasets: [
+        {
+          label: "Entradas",
+          data: entradas,
+          backgroundColor: "rgba(34,197,94,0.7)"
+        },
+        {
+          label: "Saídas",
+          data: saidas,
+          backgroundColor: "rgba(239,68,68,0.7)"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top"
+        },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              return ctx.dataset.label + ": " +
+                ctx.raw.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL"
+                });
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: value =>
+              value.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL"
+              })
+          }
+        }
+      }
     }
   });
 }
+
 
 
 async function carregarCategorias() {
