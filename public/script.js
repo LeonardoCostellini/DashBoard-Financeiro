@@ -50,6 +50,28 @@ function atualizarCategorias() {
   });
 }
 
+
+async function carregarTransacoes() {
+  const res = await fetch("/api/transactions/list", {
+    headers: {
+      Authorization: "Bearer " + token
+    }
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.error || "Erro ao carregar transações");
+    return;
+  }
+
+  transacoes = data;
+  renderizarTransacoes();
+  atualizarResumo();
+}
+
+
+
 // =======================
 // CRIAR TRANSAÇÃO
 // =======================
@@ -66,7 +88,7 @@ form.addEventListener('submit', async e => {
 
   let data = form.data.value;
 
-  // 🩹 Converte YYYY-MM → YYYY-MM-01
+  // 🔧 Converte YYYY-MM → YYYY-MM-01
   if (data.length === 7) {
     data = data + "-01";
   }
