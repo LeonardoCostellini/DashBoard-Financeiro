@@ -26,11 +26,13 @@ function parseValorBrasileiro(v) {
 }
 
 function formatarBrasileiro(v) {
-  return v.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
+  return Number(v).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2
   });
 }
+
 
 // =======================
 // CATEGORIAS
@@ -70,6 +72,7 @@ async function carregarTransacoes() {
   atualizarResumo();
 }
 
+Number(t.valor)
 
 
 // =======================
@@ -133,7 +136,7 @@ function renderizarTransacoes() {
     if (!mes || t.data.startsWith(mes)) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${formatarBrasileiro(t.valor)}</td>
+        <td>${formatarBrasileiro(Number(t.valor))}</td>
         <td>${t.tipo}</td>
         <td>${t.categoria}</td>
         <td>${t.data}</td>
