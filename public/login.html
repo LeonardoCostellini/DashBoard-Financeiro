@@ -1,16 +1,56 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<body>
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <link rel="icon" href="/img/controle-financeiro_36900-2119.avif" type="image/png">
+  <link href="output.css" rel="stylesheet">
+</head>
 
-  <h2>Login</h2>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Senha">
+<script>
+  // SE JÁ ESTIVER LOGADO, VAI PRO DASHBOARD
+  if (localStorage.getItem("token")) {
+    window.location.href = "/";
+  }
+</script>
 
-  <button onclick="login()">Entrar</button>
+<div class="bg-white p-8 rounded-xl shadow w-full max-w-md">
+  <h1 class="text-2xl font-bold mb-6 text-center">Entrar</h1>
 
-  <!-- IMPORTANTE: script NO FINAL -->
-  <script src="/auth.js"></script>
+  <input
+    id="email"
+    type="email"
+    placeholder="Email"
+    class="w-full mb-3 p-3 border rounded"
+  >
+
+  <!-- ID TEM QUE SER password -->
+  <input
+    id="password"
+    type="password"
+    placeholder="Senha"
+    class="w-full mb-4 p-3 border rounded"
+  >
+
+  <button
+    onclick="login()"
+    class="w-full bg-green-600 text-white p-3 rounded hover:bg-green-700"
+  >
+    Entrar
+  </button>
+
+  <p class="text-center mt-4 text-sm">
+    Não tem conta?
+    <a href="/register.html" class="text-green-600 font-semibold">
+      Criar conta
+    </a>
+  </p>
+</div>
+
+<!-- SCRIPT SEMPRE NO FINAL -->
+<script src="/auth.js"></script>
 
 </body>
 </html>
