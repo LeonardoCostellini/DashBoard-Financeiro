@@ -180,7 +180,12 @@ function atualizarResumo() {
 // =======================
 // GRÁFICO
 // =======================
+
+
 function atualizarGrafico() {
+  const canvas = document.getElementById("grafico");
+  if (!canvas) return; // ⛑️ evita erro
+
   let entrada = 0, saida = 0;
   const mes = filtroMes.value;
 
@@ -192,16 +197,14 @@ function atualizarGrafico() {
     }
   });
 
-  const ctx = document.getElementById("grafico").getContext("2d");
   if (chartCombinado) chartCombinado.destroy();
 
-  chartCombinado = new Chart(ctx, {
+  chartCombinado = new Chart(canvas.getContext("2d"), {
     type: "doughnut",
     data: {
       labels: ["Entradas", "Saídas"],
       datasets: [{ data: [entrada, saida] }]
-    },
-    options: { responsive: true }
+    }
   });
 }
 
