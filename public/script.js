@@ -365,7 +365,7 @@ async function carregarCategorias() {
 // METAS (BANCO)
 // =======================
 async function carregarMetas() {
-  const res = await fetch("/api/metas/list", {
+  const res = await fetch("/api/metas/metas", {
     headers: { Authorization: "Bearer " + token }
   });
 
@@ -448,7 +448,7 @@ document.getElementById("btnAddMeta").addEventListener("click", async () => {
     return;
   }
 
-  const res = await fetch("/api/metas/create", {
+  const res = await fetch("/api/metas/metas", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -475,7 +475,7 @@ async function atualizarMeta(id) {
     return;
   }
 
-  await fetch("/api/metas/update", {
+  await fetch("/api/metas/metas", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
