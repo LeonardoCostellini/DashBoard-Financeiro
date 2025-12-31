@@ -1,22 +1,36 @@
-import { Pool } from "pg";
-import { getUserId } from "../utils/auth.js";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+import jwt from "jsonwebtoken";
+import { sql } from "@vercel/postgres";
 
 export default async function handler(req, res) {
-  const userId = getUserId(req);
-  if (!userId) return res.status(401).json({ error: "Não autorizado" });
+  try {
+    if (req.method !== "POST") {
+      return res.status(405).end();
+    }
 
-  const { valor, tipo, categoria, data } = req.body;
+    // TOKEN
+    const auth = req.headers.authorization;
+    if (!auth) return res.status(401).json({ error: "Sem token" });
 
-  await pool.query(
-    `INSERT INTO transactions (user_id, valor, tipo, categoria, data)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [userId, valor, tipo, categoria, data]
-  );
+    const token = auth.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
 
-  res.json({ success: true });
+    // BODY
+    const { valor, tipo, categoria, data } = req.body;
+
+    if (!valor || !tipo || !categoria || !data) {
+      return res.status(400).json({ error: "Dados inválidos" });
+    }
+
+    await sql`
+      INSERT INTO transactions (user_id, valor, tipo, categoria, data)
+      VALUES (${userId}, ${valor}, ${tipo}, ${categoria}, ${data})
+    `;
+
+    res.status(201).json({ success: true });
+
+  } catch (err) {
+    console.error("CREATE TRANSACTION ERROR:", err);
+    res.status(500).json({ error: "Erro interno" });
+  }
 }
