@@ -64,61 +64,41 @@ form.addEventListener('submit', async e => {
     return;
   }
 
+  let data = form.data.value;
+
+  // 🩹 Converte YYYY-MM → YYYY-MM-01
+  if (data.length === 7) {
+    data = data + "-01";
+  }
+
   const payload = {
     valor,
     tipo: tipoSelect.value,
     categoria: categoriaSelect.value,
-    data: form.data.value
+    data
   };
 
-  try {
-    const res = await fetch("/api/transactions/create", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-    console.log("API:", data);
-
-    if (!res.ok) {
-      alert(data.error || "Erro ao salvar transação");
-      return;
-    }
-
-    form.reset();
-    carregarTransacoes();
-
-  } catch (err) {
-    console.error(err);
-    alert("Erro de conexão");
-  }
-});
-
-// =======================
-// LISTAR TRANSAÇÕES
-// =======================
-let transacoes = [];
-
-async function carregarTransacoes() {
-  const res = await fetch("/api/transactions/list", {
-    headers: { Authorization: "Bearer " + token }
+  const res = await fetch("/api/transactions/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify(payload)
   });
 
-  const dados = await res.json();
+  const response = await res.json();
+  console.log("API:", response);
 
   if (!res.ok) {
-    alert("Erro ao carregar transações");
+    alert(response.error || "Erro ao salvar");
     return;
   }
 
-  transacoes = dados;
-  renderizarTransacoes();
-  atualizarResumo();
-}
+  form.reset();
+  carregarTransacoes();
+});
+
 
 // =======================
 // RENDER
