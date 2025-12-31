@@ -3,25 +3,39 @@ import pkg from "pg";
 
 const { Pool } = pkg;
 
+// ⚠️ Pool precisa ficar FORA da função (Vercel)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 export default async function handler(req, res) {
+  console.log("🔥 CREATE TRANSACTION CHAMADO");
+
   try {
+    // ❌ Método inválido
     if (req.method !== "POST") {
-      return res.status(405).end();
+      return res.status(405).json({ error: "Método não permitido" });
     }
 
-    // 🔐 AUTH
-    const auth = req.headers.authorization;
-    if (!auth) {
+    // 🔐 TOKEN
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ error: "Token ausente" });
     }
 
-    const token = auth.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const token = authHeader.split(" ")[1];
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ error: "Token inválido" });
+    }
+
     const userId = decoded.userId;
 
     // 📦 BODY
@@ -48,7 +62,7 @@ export default async function handler(req, res) {
     return res.status(201).json({ success: true });
 
   } catch (err) {
-    console.error("CREATE TRANSACTION ERROR:", err);
-    return res.status(500).json({ error: err.message });
+    console.error("❌ CREATE TRANSACTION ERROR:", err);
+    return res.status(500).json({ error: "Erro interno" });
   }
 }
