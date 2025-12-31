@@ -6,6 +6,7 @@
   <link rel="icon" href="/img/controle-financeiro_36900-2119.avif" type="image/png">
   <link href="output.css" rel="stylesheet">
 </head>
+
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
 <script>
@@ -18,13 +19,15 @@
 <div class="bg-white p-8 rounded-xl shadow w-full max-w-md">
   <h1 class="text-2xl font-bold mb-6 text-center">Criar Conta</h1>
 
-  <input id="nome" placeholder="Nome"
+  <!-- NOME (OPCIONAL, NÃO USADO NO BACKEND) -->
+  <input id="nome" placeholder="Nome (opcional)"
     class="w-full mb-3 p-3 border rounded">
 
   <input id="email" type="email" placeholder="Email"
     class="w-full mb-3 p-3 border rounded">
 
-  <input id="senha" type="password" placeholder="Senha"
+  <!-- ID TEM QUE SER password -->
+  <input id="password" type="password" placeholder="Senha"
     class="w-full mb-4 p-3 border rounded">
 
   <button onclick="register()"
@@ -34,13 +37,14 @@
 
   <p class="text-center mt-4 text-sm">
     Já tem conta?
-    <a href="login.html" class="text-blue-600 font-semibold">
+    <a href="/login.html" class="text-blue-600 font-semibold">
       Entrar
     </a>
   </p>
 </div>
 
-<script src="auth.js"></script>
+<!-- SCRIPT NO FINAL -->
+<script src="/auth.js"></script>
 
 </body>
 </html>
