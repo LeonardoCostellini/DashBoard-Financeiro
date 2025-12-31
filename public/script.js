@@ -490,7 +490,7 @@ async function atualizarMeta(id) {
 async function finalizarMeta(id) {
   if (!confirm("Deseja finalizar esta meta?")) return;
 
-  await fetch(`/api/metas/delete?id=${id}`, {
+  await fetch(`/api/metas?id=${id}`, {
     method: "DELETE",
     headers: { Authorization: "Bearer " + token }
   });
