@@ -159,6 +159,7 @@ function renderizarTransacoes() {
 // =======================
 // EXCLUIR
 // =======================
+
 async function excluirTransacao(id) {
   if (!confirm("Excluir transação?")) return;
 
@@ -169,7 +170,13 @@ async function excluirTransacao(id) {
     }
   });
 
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    alert("Erro inesperado no servidor");
+    return;
+  }
 
   if (!res.ok) {
     alert(data.error || "Erro ao excluir");
