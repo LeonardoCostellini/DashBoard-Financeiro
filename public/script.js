@@ -18,9 +18,6 @@ const categoriaSelect = document.getElementById('categoria');
 const tipoSelect = document.getElementById('tipo');
 const filtroMes = document.getElementById('filtro-mes');
 
-let transacoes = [];
-let chartCombinado = null;
-
 // =======================
 // UTILS
 // =======================
@@ -36,47 +33,43 @@ function formatarBrasileiro(v) {
   });
 }
 
+
 // =======================
-// CATEGORIAS (BANCO)
+// CATEGORIAS
 // =======================
-async function carregarCategorias() {
-  const res = await fetch("/api/categories/list", {
-    headers: { Authorization: "Bearer " + token }
+const categorias = {
+  entrada: ['Salário', 'Bonificação', 'Vale Alimentação'],
+  saida: ['Aluguel', 'Supermercado', 'Luz', 'Internet']
+};
+
+function atualizarCategorias() {
+  categoriaSelect.innerHTML = '';
+  categorias[tipoSelect.value].forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    categoriaSelect.appendChild(opt);
   });
-
-  const dados = await res.json();
-  categoriaSelect.innerHTML = "";
-
-  dados
-    .filter(c => c.tipo === tipoSelect.value)
-    .forEach(c => {
-      const opt = document.createElement("option");
-      opt.value = c.nome;
-      opt.textContent = c.nome;
-      categoriaSelect.appendChild(opt);
-    });
 }
 
-tipoSelect.addEventListener("change", carregarCategorias);
 
-// =======================
-// TRANSAÇÕES
-// =======================
 async function carregarTransacoes() {
   const res = await fetch("/api/transactions/list", {
-    headers: { Authorization: "Bearer " + token }
+    headers: {
+      Authorization: "Bearer " + token
+    }
   });
 
   const data = await res.json();
+
   if (!res.ok) {
-    alert(data.error || "Erro ao carregar");
+    alert(data.error || "Erro ao carregar transações");
     return;
   }
 
   transacoes = data;
   renderizarTransacoes();
   atualizarResumo();
-  atualizarGrafico();
 }
 
 // =======================
@@ -85,32 +78,49 @@ async function carregarTransacoes() {
 form.addEventListener('submit', async e => {
   e.preventDefault();
 
-  const valor = parseValorBrasileiro(form.valor.value);
-  if (isNaN(valor)) return alert("Valor inválido");
+  const valorInput = document.getElementById("valor").value;
+  const valor = parseValorBrasileiro(valorInput);
+
+  if (isNaN(valor)) {
+    alert("Valor inválido");
+    return;
+  }
 
   let data = form.data.value;
-  if (data.length === 7) data += "-01";
+
+  // 🔧 Converte YYYY-MM → YYYY-MM-01
+  if (data.length === 7) {
+    data = data + "-01";
+  }
+
+  const payload = {
+    valor,
+    tipo: tipoSelect.value,
+    categoria: categoriaSelect.value,
+    data
+  };
 
   const res = await fetch("/api/transactions/create", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + token
+      "Authorization": "Bearer " + token
     },
-    body: JSON.stringify({
-      valor,
-      tipo: tipoSelect.value,
-      categoria: categoriaSelect.value,
-      data
-    })
+    body: JSON.stringify(payload)
   });
 
-  const r = await res.json();
-  if (!res.ok) return alert(r.error || "Erro");
+  const response = await res.json();
+  console.log("API:", response);
+
+  if (!res.ok) {
+    alert(response.error || "Erro ao salvar");
+    return;
+  }
 
   form.reset();
   carregarTransacoes();
 });
+
 
 // =======================
 // RENDER
@@ -123,38 +133,55 @@ function renderizarTransacoes() {
     if (!mes || t.data.startsWith(mes)) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${formatarBrasileiro(t.valor)}</td>
+        <td>${formatarBrasileiro(Number(t.valor))}</td>
         <td>${t.tipo}</td>
         <td>${t.categoria}</td>
         <td>${t.data}</td>
         <td>
-          <button class="bg-red-500 text-white px-3 py-1 rounded">
+          <button
+            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+            data-id="${t.id}"
+          >
             Excluir
           </button>
         </td>
       `;
 
-      tr.querySelector("button")
-        .addEventListener("click", () => excluirTransacao(t.id));
+      const btn = tr.querySelector("button");
+      btn.addEventListener("click", () => excluirTransacao(t.id));
 
       lista.appendChild(tr);
     }
   });
 }
 
+
 // =======================
 // EXCLUIR
 // =======================
+
 async function excluirTransacao(id) {
   if (!confirm("Excluir transação?")) return;
 
   const res = await fetch(`/api/transactions/delete?id=${id}`, {
     method: "DELETE",
-    headers: { Authorization: "Bearer " + token }
+    headers: {
+      Authorization: "Bearer " + token
+    }
   });
 
-  const data = await res.json();
-  if (!res.ok) return alert(data.error || "Erro");
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    alert("Erro inesperado no servidor");
+    return;
+  }
+
+  if (!res.ok) {
+    alert(data.error || "Erro ao excluir");
+    return;
+  }
 
   carregarTransacoes();
 }
@@ -168,7 +195,7 @@ function atualizarResumo() {
 
   transacoes.forEach(t => {
     if (!mes || t.data.startsWith(mes)) {
-      t.tipo === "entrada" ? ent += Number(t.valor) : sai += Number(t.valor);
+      t.tipo === 'entrada' ? ent += t.valor : sai += t.valor;
     }
   });
 
@@ -178,9 +205,18 @@ function atualizarResumo() {
 }
 
 // =======================
-// GRÁFICO
+// INIT
 // =======================
+document.addEventListener("DOMContentLoaded", () => {
+  atualizarCategorias();
+  carregarTransacoes();
+});
 
+tipoSelect.addEventListener('change', atualizarCategorias);
+filtroMes.addEventListener('change', () => {
+  renderizarTransacoes();
+  atualizarResumo();
+});
 
 function atualizarGrafico() {
   const canvas = document.getElementById("grafico");
@@ -208,16 +244,34 @@ function atualizarGrafico() {
   });
 }
 
-// =======================
-// INIT
-// =======================
-document.addEventListener("DOMContentLoaded", () => {
-  carregarCategorias();
-  carregarTransacoes();
-});
 
-filtroMes.addEventListener("change", () => {
-  renderizarTransacoes();
-  atualizarResumo();
-  atualizarGrafico();
-});
+async function carregarCategorias() {
+  const res = await fetch("/api/categories/list", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const categorias = await res.json();
+  const select = document.getElementById("categoria");
+
+  select.innerHTML = "<option value=''>Selecione</option>";
+
+  categorias.forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat.nome;
+    opt.textContent = cat.nome;
+    select.appendChild(opt);
+  });
+}
+
+function renderMeta(meta) {
+  return `
+    <div class="bg-white p-4 rounded shadow mb-2">
+      <h3>${meta.nome}</h3>
+      <p>R$ ${meta.valor_atual} / R$ ${meta.valor_total}</p>
+      <div class="w-full bg-gray-200 h-3 rounded">
+        <div class="bg-green-500 h-3 rounded" style="width:${meta.progresso}%"></div>
+      </div>
+    </div>
+  `;
+}
+
