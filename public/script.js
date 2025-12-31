@@ -361,15 +361,55 @@ async function carregarCategorias() {
   });
 }
 
-function renderMeta(meta) {
-  return `
-    <div class="bg-white p-4 rounded shadow mb-2">
-      <h3>${meta.nome}</h3>
-      <p>R$ ${meta.valor_atual} / R$ ${meta.valor_total}</p>
-      <div class="w-full bg-gray-200 h-3 rounded">
-        <div class="bg-green-500 h-3 rounded" style="width:${meta.progresso}%"></div>
-      </div>
-    </div>
-  `;
+btnAddMeta.addEventListener("click", async () => {
+  const nome = document.getElementById("nomeMeta").value;
+  const valor_total = parseValorBrasileiro(
+    document.getElementById("valorMeta").value
+  );
+  const valor_atual = parseValorBrasileiro(
+    document.getElementById("valorAtualMeta").value
+  );
+
+  if (!nome || isNaN(valor_total)) {
+    alert("Preencha corretamente a meta");
+    return;
+  }
+
+  await fetch("/api/metas/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ nome, valor_total, valor_atual })
+  });
+
+  document.getElementById("nomeMeta").value = "";
+  document.getElementById("valorMeta").value = "";
+  document.getElementById("valorAtualMeta").value = "";
+
+  carregarMetas();
+});
+
+
+async function carregarMetas() {
+  const res = await fetch("/api/metas/list", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  if (!res.ok) return;
+
+  const metas = await res.json();
+  listaMetas.innerHTML = "";
+
+  metas.forEach(meta => {
+    listaMetas.innerHTML += renderMeta(meta);
+  });
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  atualizarCategorias();
+  carregarTransacoes();
+  carregarMetas(); // ⬅️ METAS AQUI
+});
 
