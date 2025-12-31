@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Criar Conta</title>
+  <link rel="icon" href="/img/controle-financeiro_36900-2119.avif" type="image/png">
+  <link href="output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+<script>
+  // SE JÁ ESTIVER LOGADO, VAI DIRETO PRO DASHBOARD
+  if (localStorage.getItem("token")) {
+    window.location.href = "/";
+  }
+</script>
+
+<div class="bg-white p-8 rounded-xl shadow w-full max-w-md">
+  <h1 class="text-2xl font-bold mb-6 text-center">Criar Conta</h1>
+
+  <input id="nome" placeholder="Nome"
+    class="w-full mb-3 p-3 border rounded">
+
+  <input id="email" type="email" placeholder="Email"
+    class="w-full mb-3 p-3 border rounded">
+
+  <input id="senha" type="password" placeholder="Senha"
+    class="w-full mb-4 p-3 border rounded">
+
+  <button onclick="register()"
+    class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">
+    Criar Conta
+  </button>
+
+  <p class="text-center mt-4 text-sm">
+    Já tem conta?
+    <a href="login.html" class="text-blue-600 font-semibold">
+      Entrar
+    </a>
+  </p>
+</div>
+
+<script src="auth.js"></script>
+
+</body>
+</html>
