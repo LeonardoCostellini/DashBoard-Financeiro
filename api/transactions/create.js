@@ -51,17 +51,18 @@ export default async function handler(req, res) {
     }
 
     const tipoFinal =
-  tipo.toLowerCase() === "entrada" ? "ENTRADA" : "SAIDA";
+      tipo.toLowerCase() === "entrada" ? "ENTRADA" : "SAIDA";
 
 
     // 🧠 INSERT
     await pool.query(
       `
-      INSERT INTO transactions ([userId, valor, tipoFinal, categoria, data])
-      VALUES ($1, $2, $3, $4, $5)
-      `,
-      [userId, valor, tipo, categoria, data]
+  INSERT INTO transactions (user_id, valor, tipo, categoria, data)
+  VALUES ($1, $2, $3, $4, $5)
+  `,
+      [userId, valorFinal, tipo, categoria, data]
     );
+
 
     return res.status(201).json({ success: true });
 
@@ -69,4 +70,10 @@ export default async function handler(req, res) {
     console.error("❌ CREATE TRANSACTION ERROR:", err);
     return res.status(500).json({ error: "Erro interno" });
   }
+}
+
+const valorFinal = Number(valor);
+
+if (isNaN(valorFinal)) {
+  return res.status(400).json({ error: "Valor inválido" });
 }
