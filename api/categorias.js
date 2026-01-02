@@ -23,16 +23,20 @@ function getUserId(req) {
 
 export default async function handler(req, res) {
   const userId = getUserId(req);
-  if (!userId) return res.status(401).json({ error: "Token inválido" });
+  if (!userId) {
+    return res.status(401).json({ error: "Sem token" });
+  }
 
+  // 🔹 LISTAR
   if (req.method === "GET") {
     const { rows } = await pool.query(
-      "SELECT * FROM categorias WHERE user_id = $1 ORDER BY id",
+      "SELECT id, nome, tipo FROM categorias WHERE user_id = $1 ORDER BY nome",
       [userId]
     );
     return res.status(200).json(rows);
   }
 
+  // 🔹 CRIAR
   if (req.method === "POST") {
     const { nome, tipo } = req.body;
 
@@ -41,27 +45,14 @@ export default async function handler(req, res) {
     }
 
     const { rows } = await pool.query(
-      `
-      INSERT INTO categorias (user_id, nome, tipo)
-      VALUES ($1, $2, $3)
-      RETURNING *
-      `,
+      `INSERT INTO categorias (user_id, nome, tipo)
+       VALUES ($1, $2, $3)
+       RETURNING id, nome, tipo`,
       [userId, nome, tipo]
     );
 
     return res.status(201).json(rows[0]);
   }
 
-  if (req.method === "DELETE") {
-    const { id } = req.query;
-
-    await pool.query(
-      "DELETE FROM categorias WHERE id = $1 AND user_id = $2",
-      [id, userId]
-    );
-
-    return res.status(200).json({ success: true });
-  }
-
-  return res.status(405).end();
+  return res.status(405).json({ error: "Método não permitido" });
 }

@@ -360,18 +360,37 @@ function atualizarGrafico() {
 
 
 async function carregarCategorias() {
-  const res = await fetch("/api/categorias", {
-    headers: { Authorization: "Bearer " + token }
+  const res = await fetch("/api/categories", {
+    headers: {
+      Authorization: "Bearer " + token
+    }
   });
 
   if (!res.ok) return;
 
-  categorias = await res.json();
-  renderizarCategorias();
+  const categorias = await res.json();
+  const select = document.getElementById("categoria");
+  select.innerHTML = "";
+
+  categorias.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat.nome;
+    option.textContent = cat.nome;
+    select.appendChild(option);
+  });
 }
 
-async function criarCategoria(nome, tipo) {
-  const res = await fetch("/api/categorias", {
+
+document.getElementById("btnCriarCategoria").addEventListener("click", async () => {
+  const nome = document.getElementById("novaCategoria").value.trim();
+  const tipo = document.getElementById("tipoCategoria").value;
+
+  if (!nome) {
+    alert("Digite o nome da categoria");
+    return;
+  }
+
+  const res = await fetch("/api/categories", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -380,13 +399,18 @@ async function criarCategoria(nome, tipo) {
     body: JSON.stringify({ nome, tipo })
   });
 
-  if (!res.ok) return alert("Erro ao criar categoria");
+  if (!res.ok) {
+    alert("Erro ao criar categoria");
+    return;
+  }
 
+  document.getElementById("novaCategoria").value = "";
   carregarCategorias();
-}
+});
 
 
-  const categorias = await res.json();
+
+  const categoria = await res.json();
   const select = document.getElementById("categoria");
 
   select.innerHTML = "<option value=''>Selecione</option>";
@@ -397,7 +421,7 @@ async function criarCategoria(nome, tipo) {
     opt.textContent = cat.nome;
     select.appendChild(opt);
   });
-}
+
 
 // =======================
 // METAS (BANCO)
