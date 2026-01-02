@@ -80,26 +80,31 @@ const categorias = {
 };
 
 async function atualizarCategorias() {
-  const res = await fetch("/api/categorias", {
+  const res = await fetch("/api/categories/list", {
     headers: {
       Authorization: "Bearer " + token
     }
   });
 
-  if (!res.ok) return;
+  if (!res.ok) {
+    console.error("Erro ao carregar categorias");
+    return;
+  }
 
-  const data = await res.json();
-  categoriaSelect.innerHTML = "";
+  const categorias = await res.json();
 
-  data
-    .filter(c => c.tipo === tipoSelect.value)
-    .forEach(c => {
+  categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
+
+  categorias
+    .filter(cat => cat.tipo === tipoSelect.value)
+    .forEach(cat => {
       const opt = document.createElement("option");
-      opt.value = c.nome;
-      opt.textContent = c.nome;
+      opt.value = cat.nome;
+      opt.textContent = cat.nome;
       categoriaSelect.appendChild(opt);
     });
 }
+
 
 async function carregarTransacoes() {
   const res = await fetch("/api/transactions/list", {
