@@ -399,12 +399,15 @@ async function carregarMetas() {
 lucide.createIcons();
 
 function renderizarMeta(meta) {
-  const perc = Math.min(
-    (meta.valor_atual / meta.valor_total) * 100,
-    100
-  );
 
-  const concluida = perc >= 100;
+const atual = Number(meta.valor_atual);
+const total = Number(meta.valor_total);
+
+const perc = total > 0
+  ? Math.min((atual / total) * 100, 100)
+  : 0;
+
+const concluida = atual >= total && total > 0;
 
   let cor = "#f97316"; // laranja
   let statusTexto = "Em progresso";
@@ -495,9 +498,9 @@ document.getElementById("btnAddMeta").addEventListener("click", async () => {
 
 async function atualizarMeta(id) {
   const input = document.getElementById(`novaMeta-${id}`).value;
-  const valor = parseValorBrasileiro(input);
+  const incremento = parseValorBrasileiro(input);
 
-  if (isNaN(valor) || valor <= 0) {
+  if (isNaN(incremento) || incremento <= 0) {
     alert("Valor inválido");
     return;
   }
@@ -508,11 +511,12 @@ async function atualizarMeta(id) {
       "Content-Type": "application/json",
       Authorization: "Bearer " + token
     },
-    body: JSON.stringify({ id, incremento: valor })
+    body: JSON.stringify({ id, incremento })
   });
 
   carregarMetas();
 }
+
 
 async function finalizarMeta(id) {
   if (!confirm("Deseja finalizar esta meta?")) return;
@@ -526,5 +530,6 @@ async function finalizarMeta(id) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  carregarMetas();     // ⬅️ ISSO FAZ PUXAR DO BANCO
   lucide.createIcons();
 });

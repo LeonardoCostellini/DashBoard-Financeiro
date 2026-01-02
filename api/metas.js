@@ -53,10 +53,6 @@ export default async function handler(req, res) {
 if (req.method === "PUT") {
   const { id, incremento } = req.body;
 
-  if (!incremento || incremento <= 0) {
-    return res.status(400).json({ error: "Incremento inválido" });
-  }
-
   await pool.query(
     `
     UPDATE metas
@@ -68,6 +64,7 @@ if (req.method === "PUT") {
 
   return res.status(200).json({ success: true });
 }
+
 
     if (req.method === "DELETE") {
       const { id } = req.query;
