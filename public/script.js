@@ -272,7 +272,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   atualizarCategorias();
   carregarTransacoes();
+
+  lucide.createIcons();
 });
+
 
 
 tipoSelect.addEventListener('change', atualizarCategorias);
