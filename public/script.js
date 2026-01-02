@@ -402,13 +402,18 @@ function renderizarMeta(meta) {
   const perc = Math.min(
     (meta.valor_atual / meta.valor_total) * 100,
     100
-  ).toFixed(1);
+  );
 
-  const concluida = meta.valor_atual >= meta.valor_total;
+  const concluida = perc >= 100;
 
-  let cor = "#f97316";
-  if (perc >= 50) cor = "#eab308";
-  if (perc >= 100) cor = "#22c55e";
+  let cor = "#f97316"; // laranja
+  let statusTexto = "Em progresso";
+
+  if (perc >= 50) cor = "#eab308"; // amarelo
+  if (perc >= 100) {
+    cor = "#22c55e"; // verde
+    statusTexto = "Meta concluída 🎉";
+  }
 
   return `
     <div class="mb-6 p-4 bg-white shadow-md rounded-lg">
@@ -418,18 +423,21 @@ function renderizarMeta(meta) {
         ${formatarBrasileiro(meta.valor_atual)} de ${formatarBrasileiro(meta.valor_total)}
       </p>
 
-      <div class="w-full bg-gray-200 rounded-lg h-6 mt-2 overflow-hidden relative">
+      <div class="w-full bg-gray-200 rounded-lg h-6 mt-2 overflow-hidden">
         <div
           class="h-full flex items-center justify-center text-white text-sm font-semibold transition-all duration-500"
-          style="width:${perc}%; background-color:${cor}; min-width:2rem">
-          ${perc}%
+          style="width:${perc}%; background-color:${cor}">
+          ${perc.toFixed(1)}%
         </div>
       </div>
+
+      <p class="mt-2 font-semibold ${concluida ? "text-green-600" : "text-gray-600"}">
+        ${statusTexto}
+      </p>
 
       ${
         concluida
           ? `
-            <p class="text-green-600 font-bold mt-2">🎉 Parabéns! Meta alcançada!</p>
             <button onclick="finalizarMeta(${meta.id})"
               class="mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded">
               Finalizar Meta
@@ -453,6 +461,7 @@ function renderizarMeta(meta) {
     </div>
   `;
 }
+
 
 
 
