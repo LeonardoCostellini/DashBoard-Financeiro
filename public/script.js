@@ -453,6 +453,7 @@ const perc = total > 0
 
 const concluida = atual >= total && total > 0;
 
+
   let cor = "#f97316"; // laranja
   let statusTexto = "Em progresso";
 
@@ -562,6 +563,7 @@ async function atualizarMeta(id) {
 }
 
 
+
 async function finalizarMeta(id) {
   if (!confirm("Deseja finalizar esta meta?")) return;
 
@@ -577,3 +579,4 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarMetas();     // ⬅️ ISSO FAZ PUXAR DO BANCO
   lucide.createIcons();
 });
+

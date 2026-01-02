@@ -66,6 +66,7 @@ if (req.method === "PUT") {
 }
 
 
+
     if (req.method === "DELETE") {
       const { id } = req.query;
 
