@@ -80,7 +80,7 @@ const categorias = {
 };
 
 async function atualizarCategorias() {
-  const res = await fetch("/api/categories", {
+  const res = await fetch("/api/categorias", {
     headers: {
       Authorization: "Bearer " + token
     }
@@ -362,7 +362,7 @@ function atualizarGrafico() {
 
 
 async function carregarCategorias() {
-  const res = await fetch("/api/categories", {
+  const res = await fetch("/api/categorias", {
     headers: {
       Authorization: "Bearer " + token
     }
@@ -394,7 +394,7 @@ document.getElementById("btnCriarCategoria").addEventListener("click", async () 
     return;
   }
 
-  const res = await fetch("/api/categories", {
+  const res = await fetch("/api/categorias", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
