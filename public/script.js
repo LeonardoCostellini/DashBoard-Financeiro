@@ -370,17 +370,19 @@ async function carregarCategorias() {
 
   if (!res.ok) return;
 
-  const categorias = await res.json();
-  const select = document.getElementById("categoria");
-  select.innerHTML = "";
+  const data = await res.json();
+  categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
 
-  categorias.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat.nome;
-    option.textContent = cat.nome;
-    select.appendChild(option);
-  });
+  data
+    .filter(cat => cat.tipo === tipoSelect.value)
+    .forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat.nome;
+      opt.textContent = cat.nome;
+      categoriaSelect.appendChild(opt);
+    });
 }
+
 
 
 document.getElementById("btnCriarCategoria").addEventListener("click", async () => {
@@ -409,20 +411,6 @@ document.getElementById("btnCriarCategoria").addEventListener("click", async () 
   document.getElementById("novaCategoria").value = "";
   carregarCategorias();
 });
-
-
-
-  const categoria = await res.json();
-  const select = document.getElementById("categoria");
-
-  select.innerHTML = "<option value=''>Selecione</option>";
-
-  categorias.forEach(cat => {
-    const opt = document.createElement("option");
-    opt.value = cat.nome;
-    opt.textContent = cat.nome;
-    select.appendChild(opt);
-  });
 
 
 // =======================
