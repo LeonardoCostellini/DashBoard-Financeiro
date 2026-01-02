@@ -80,8 +80,10 @@ const categorias = {
 };
 
 async function atualizarCategorias() {
-  const res = await fetch("/api/categoria", {
-    headers: { Authorization: "Bearer " + token }
+  const res = await fetch("/api/categories", {
+    headers: {
+      Authorization: "Bearer " + token
+    }
   });
 
   if (!res.ok) return;
