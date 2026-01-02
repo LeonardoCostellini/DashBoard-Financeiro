@@ -391,36 +391,6 @@ async function carregarCategorias() {
     });
 }
 
-
-
-document.getElementById("btnCriarCategoria").addEventListener("click", async () => {
-  const nome = document.getElementById("novaCategoria").value.trim();
-  const tipo = document.getElementById("tipoCategoria").value;
-
-  if (!nome) {
-    alert("Digite o nome da categoria");
-    return;
-  }
-
-  const res = await fetch("/api/categorias", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
-    body: JSON.stringify({ nome, tipo })
-  });
-
-  if (!res.ok) {
-    alert("Erro ao criar categoria");
-    return;
-  }
-
-  document.getElementById("novaCategoria").value = "";
-  carregarCategorias();
-});
-
-
 // =======================
 // METAS (BANCO)
 // =======================
