@@ -273,7 +273,7 @@ filtroMes.addEventListener('change', () => {
   renderizarTransacoes();
   atualizarResumo();
   atualizarGrafico(); // ⬅️ ESSENCIAL
-});
+}); 
 
 function atualizarGrafico() {
   const canvas = document.getElementById("graficoCombinado");
@@ -422,38 +422,38 @@ function renderizarMeta(meta) {
         <div
           class="h-full flex items-center justify-center text-white text-sm font-semibold transition-all duration-500"
           style="width:${perc}%; background-color:${cor}; min-width:2rem">
-          ${perc > 0 ? `${perc}%` : ""}
+          ${perc}%
         </div>
-        ${perc == 0 ? `<span class="absolute left-2 text-sm text-gray-500">0%</span>` : ""}
       </div>
 
       ${
         concluida
           ? `
-          <p class="text-green-600 font-bold mt-2">🎉 Parabéns! Meta alcançada!</p>
-          <button onclick="finalizarMeta(${meta.id})"
-            class="mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded">
-            Finalizar Meta
-          </button>
-        `
-          : `
-          <div class="mt-3 flex gap-2">
-            <input
-              type="text"
-              placeholder="Novo valor"
-              id="novaMeta-${meta.id}"
-              class="border border-gray-300 rounded px-2 py-1 w-full"
-            />
-            <button onclick="atualizarMeta(${meta.id})"
-              class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded">
-              Atualizar
+            <p class="text-green-600 font-bold mt-2">🎉 Parabéns! Meta alcançada!</p>
+            <button onclick="finalizarMeta(${meta.id})"
+              class="mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded">
+              Finalizar Meta
             </button>
-          </div>
-        `
+          `
+          : `
+            <div class="mt-3 flex gap-2">
+              <input
+                type="text"
+                placeholder="Adicionar valor"
+                id="novaMeta-${meta.id}"
+                class="border border-gray-300 rounded px-2 py-1 w-full"
+              />
+              <button onclick="atualizarMeta(${meta.id})"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded">
+                Atualizar
+              </button>
+            </div>
+          `
       }
     </div>
   `;
 }
+
 
 
 document.getElementById("btnAddMeta").addEventListener("click", async () => {
@@ -499,7 +499,7 @@ async function atualizarMeta(id) {
       "Content-Type": "application/json",
       Authorization: "Bearer " + token
     },
-    body: JSON.stringify({ id, valor })
+    body: JSON.stringify({ id, incremento: valor })
   });
 
   carregarMetas();

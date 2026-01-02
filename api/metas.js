@@ -49,17 +49,25 @@ export default async function handler(req, res) {
 
       return res.status(201).json(rows[0]);
     }
+    
+if (req.method === "PUT") {
+  const { id, incremento } = req.body;
 
-    if (req.method === "PUT") {
-      const { id, valor_atual } = req.body;
+  if (!incremento || incremento <= 0) {
+    return res.status(400).json({ error: "Incremento inválido" });
+  }
 
-      await pool.query(
-        "UPDATE metas SET valor_atual = $1 WHERE id = $2 AND user_id = $3",
-        [valor_atual, id, userId]
-      );
+  await pool.query(
+    `
+    UPDATE metas
+    SET valor_atual = valor_atual + $1
+    WHERE id = $2 AND user_id = $3
+    `,
+    [incremento, id, userId]
+  );
 
-      return res.status(200).json({ success: true });
-    }
+  return res.status(200).json({ success: true });
+}
 
     if (req.method === "DELETE") {
       const { id } = req.query;
