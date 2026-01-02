@@ -239,7 +239,12 @@ function atualizarResumo() {
 
   transacoes.forEach(t => {
     if (!mes || t.data.startsWith(mes)) {
-      t.tipo === 'entrada' ? ent += t.valor : sai += t.valor;
+      const valor = Number(t.valor);
+      if (t.tipo === 'entrada') {
+        ent += valor;
+      } else {
+        sai += valor;
+      }
     }
   });
 
@@ -247,6 +252,7 @@ function atualizarResumo() {
   totalSaidas.textContent = formatarBrasileiro(sai);
   saldo.textContent = formatarBrasileiro(ent - sai);
 }
+
 
 // =======================
 // INIT
@@ -271,7 +277,10 @@ function atualizarGrafico() {
   // Agrupar por categoria
   const categorias = {};
 
+  const mes = filtroMes.value;
+
   transacoes.forEach(t => {
+    if (mes && !t.data.startsWith(mes)) return;
     if (!categorias[t.categoria]) {
       categorias[t.categoria] = { entrada: 0, saida: 0 };
     }
@@ -379,6 +388,8 @@ async function carregarMetas() {
     container.innerHTML += renderizarMeta(meta);
   });
 }
+
+lucide.createIcons();
 
 function renderizarMeta(meta) {
   const perc = Math.min(
@@ -497,3 +508,7 @@ async function finalizarMeta(id) {
 
   carregarMetas();
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  lucide.createIcons();
+});
