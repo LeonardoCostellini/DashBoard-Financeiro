@@ -80,7 +80,7 @@ const categorias = {
 };
 
 async function atualizarCategorias() {
-  const res = await fetch("/api/categories/list", {
+  const res = await fetch("/api/categoria", {
     headers: { Authorization: "Bearer " + token }
   });
 
@@ -360,9 +360,31 @@ function atualizarGrafico() {
 
 
 async function carregarCategorias() {
-  const res = await fetch("/api/categories/list", {
+  const res = await fetch("/api/categorias", {
     headers: { Authorization: "Bearer " + token }
   });
+
+  if (!res.ok) return;
+
+  categorias = await res.json();
+  renderizarCategorias();
+}
+
+async function criarCategoria(nome, tipo) {
+  const res = await fetch("/api/categorias", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ nome, tipo })
+  });
+
+  if (!res.ok) return alert("Erro ao criar categoria");
+
+  carregarCategorias();
+}
+
 
   const categorias = await res.json();
   const select = document.getElementById("categoria");
