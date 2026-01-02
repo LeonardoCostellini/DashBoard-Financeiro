@@ -258,14 +258,21 @@ function atualizarResumo() {
 // INIT
 // =======================
 document.addEventListener("DOMContentLoaded", () => {
+  const hoje = new Date();
+  const mesAtual = hoje.toISOString().slice(0, 7); // YYYY-MM
+
+  filtroMes.value = mesAtual;
+
   atualizarCategorias();
   carregarTransacoes();
 });
+
 
 tipoSelect.addEventListener('change', atualizarCategorias);
 filtroMes.addEventListener('change', () => {
   renderizarTransacoes();
   atualizarResumo();
+  atualizarGrafico(); // ⬅️ ESSENCIAL
 });
 
 function atualizarGrafico() {
@@ -273,14 +280,13 @@ function atualizarGrafico() {
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
+  const mes = filtroMes.value; // ⬅️ ESSENCIAL
 
-  // Agrupar por categoria
   const categorias = {};
 
-  const mes = filtroMes.value;
-
   transacoes.forEach(t => {
-    if (mes && !t.data.startsWith(mes)) return;
+    if (mes && !t.data.startsWith(mes)) return; // ⬅️ FILTRO REAL
+
     if (!categorias[t.categoria]) {
       categorias[t.categoria] = { entrada: 0, saida: 0 };
     }
@@ -291,6 +297,7 @@ function atualizarGrafico() {
       categorias[t.categoria].saida += Number(t.valor);
     }
   });
+
 
   const labels = Object.keys(categorias);
   const entradas = labels.map(cat => categorias[cat].entrada);
