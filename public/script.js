@@ -180,17 +180,35 @@ function renderizarTransacoes() {
 
   transacoes.forEach(t => {
     if (!mes || t.data.startsWith(mes)) {
+
+      const corValor =
+        t.tipo === "entrada" ? "text-green-500" : "text-red-500";
+
       const tr = document.createElement('tr');
+      tr.className = "border-b hover:bg-gray-50";
+
       tr.innerHTML = `
-        <td>${formatarBrasileiro(Number(t.valor))}</td>
-        <td>${t.tipo}</td>
-        <td>${t.categoria}</td>
-        <td>${t.data}</td>
-        <td>
+        <td class="py-3 font-semibold ${corValor}">
+          ${formatarBrasileiro(Number(t.valor))}
+        </td>
+
+        <td class="py-3 capitalize">
+          ${t.tipo}
+        </td>
+
+        <td class="py-3">
+          ${t.categoria}
+        </td>
+
+        <td class="py-3">
+          ${t.data}
+        </td>
+
+        <td class="py-3 text-right">
           <button
-            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-            data-id="${t.id}"
-          >
+            class="border border-red-500 text-red-500 px-3 py-1 rounded
+                   hover:bg-red-500 hover:text-white transition"
+            data-id="${t.id}">
             Excluir
           </button>
         </td>
