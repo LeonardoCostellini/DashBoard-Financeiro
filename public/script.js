@@ -568,3 +568,22 @@ document.addEventListener("DOMContentLoaded", () => {
   lucide.createIcons();
 });
 
+//Criar Categoria
+
+async function atualizarCategorias() {
+  const res = await fetch("/api/categories", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const categorias = await res.json();
+  categoriaSelect.innerHTML = "";
+
+  categorias
+    .filter(c => c.tipo === tipoSelect.value)
+    .forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.nome;
+      opt.textContent = c.nome;
+      categoriaSelect.appendChild(opt);
+    });
+}

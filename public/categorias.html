@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Criar Categoria</title>
+  <link href="./output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-8">
+
+  <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
+    <h1 class="text-2xl font-bold mb-6">Criar Categoria</h1>
+
+    <input id="nomeCategoria" placeholder="Nome da categoria"
+      class="w-full p-3 border rounded mb-4">
+
+    <select id="tipoCategoria"
+      class="w-full p-3 border rounded mb-4">
+      <option value="entrada">Entrada</option>
+      <option value="saida">Saída</option>
+    </select>
+
+    <button id="btnSalvarCategoria"
+      class="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700">
+      Salvar
+    </button>
+  </div>
+
+<script src="categorias.js"></script>
+</body>
+</html>
