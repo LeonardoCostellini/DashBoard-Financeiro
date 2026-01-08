@@ -568,3 +568,35 @@ document.addEventListener("DOMContentLoaded", () => {
   lucide.createIcons();
 });
 
+
+// =======================
+// CRIAR CATEGORIA DO USUÁRIO
+// =======================
+document.getElementById("btnAddCategoria")?.addEventListener("click", async () => {
+  const nome = document.getElementById("inputNovaCategoria").value.trim();
+  const tipo = document.getElementById("tipoCategoria").value;
+
+  if (!nome) {
+    alert("Informe o nome da categoria");
+    return;
+  }
+
+  const res = await fetch("/api/categories/create_userid", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ nome, tipo })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.error || "Erro ao criar categoria");
+    return;
+  }
+
+  document.getElementById("inputNovaCategoria").value = "";
+  atualizarCategorias(); // 🔥 atualiza o select automaticamente
+});
