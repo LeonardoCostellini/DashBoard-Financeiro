@@ -80,29 +80,48 @@ const categorias = {
 };
 
 async function atualizarCategorias() {
-  const res = await fetch("/api/categories/list", {
-    headers: {
-      Authorization: "Bearer " + token
+  try {
+    const [resPadrao, resUsuario] = await Promise.all([
+      fetch("/api/categories/list"),
+      fetch("/api/categories_user", {
+        headers: {
+          Authorization: "Bearer " + token
+        }
+      })
+    ]);
+
+    const categoriasPadrao = await resPadrao.json();
+    const categoriasUsuario = await resUsuario.json();
+
+    if (!Array.isArray(categoriasPadrao)) {
+      console.error("Categorias padrão inválidas:", categoriasPadrao);
+      return;
     }
-  });
 
-  if (!res.ok) {
-    console.error("Erro ao carregar categorias");
-    return;
+    if (!Array.isArray(categoriasUsuario)) {
+      console.error("Categorias usuário inválidas:", categoriasUsuario);
+      return;
+    }
+
+    const todasCategorias = [
+      ...categoriasPadrao,
+      ...categoriasUsuario
+    ];
+
+    categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
+
+    todasCategorias
+      .filter(cat => cat.tipo === tipoSelect.value)
+      .forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat.nome;
+        opt.textContent = cat.nome;
+        categoriaSelect.appendChild(opt);
+      });
+
+  } catch (err) {
+    console.error("Erro ao carregar categorias:", err);
   }
-
-  const categorias = await res.json();
-
-  categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
-
-  categorias
-    .filter(cat => cat.tipo === tipoSelect.value)
-    .forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat.nome;
-      opt.textContent = cat.nome;
-      categoriaSelect.appendChild(opt);
-    });
 }
 
 
@@ -567,23 +586,3 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarMetas();     // ⬅️ ISSO FAZ PUXAR DO BANCO
   lucide.createIcons();
 });
-
-//Criar Categoria
-
-async function atualizarCategorias() {
-  const res = await fetch("/api/categories_user", {
-    headers: { Authorization: "Bearer " + token }
-  });
-
-  const categorias = await res.json();
-  categoriaSelect.innerHTML = "";
-
-  categorias
-    .filter(c => c.tipo === tipoSelect.value)
-    .forEach(c => {
-      const opt = document.createElement("option");
-      opt.value = c.nome;
-      opt.textContent = c.nome;
-      categoriaSelect.appendChild(opt);
-    });
-}
