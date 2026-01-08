@@ -182,35 +182,38 @@ form.addEventListener('submit', async e => {
 // =======================
 // RENDER
 // =======================
+
 function renderizarTransacoes() {
   lista.innerHTML = '';
   const mes = filtroMes.value;
 
   transacoes.forEach(t => {
-    if (!mes || t.data.startsWith(mes)) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${formatarBrasileiro(Number(t.valor))}</td>
-        <td>${t.tipo}</td>
-        <td>${t.categoria}</td>
-        <td>${t.data}</td>
-        <td>
-          <button
-            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-            data-id="${t.id}"
-          >
-            Excluir
-          </button>
-        </td>
-      `;
+    if (!t.data) return; // 🔥 blindagem
+    if (mes && !String(t.data).startsWith(mes)) return;
 
-      const btn = tr.querySelector("button");
-      btn.addEventListener("click", () => excluirTransacao(t.id));
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${formatarBrasileiro(Number(t.valor))}</td>
+      <td>${t.tipo}</td>
+      <td>${t.categoria}</td>
+      <td>${t.data}</td>
+      <td>
+        <button
+          class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+          data-id="${t.id}"
+        >
+          Excluir
+        </button>
+      </td>
+    `;
 
-      lista.appendChild(tr);
-    }
+    tr.querySelector("button")
+      .addEventListener("click", () => excluirTransacao(t.id));
+
+    lista.appendChild(tr);
   });
 }
+
 
 
 // =======================
@@ -248,25 +251,34 @@ async function excluirTransacao(id) {
 // =======================
 // RESUMO
 // =======================
+
 function atualizarResumo() {
   let ent = 0, sai = 0;
   const mes = filtroMes.value;
 
   transacoes.forEach(t => {
-    if (!mes || t.data.startsWith(mes)) {
-      const valor = Number(t.valor);
-      if (t.tipo === 'entrada') {
-        ent += valor;
-      } else {
-        sai += valor;
-      }
-    }
+    if (!t.data) return;
+    if (mes && !String(t.data).startsWith(mes)) return;
+
+    const valor = Number(t.valor);
+    t.tipo === 'entrada' ? ent += valor : sai += valor;
   });
 
   totalEntradas.textContent = formatarBrasileiro(ent);
   totalSaidas.textContent = formatarBrasileiro(sai);
   saldo.textContent = formatarBrasileiro(ent - sai);
 }
+
+transacoes.forEach(t => {
+  if (!t.data) return;
+  if (mes && !String(t.data).startsWith(mes)) return;
+
+  if (!categorias[t.categoria]) {
+    categorias[t.categoria] = { entrada: 0, saida: 0 };
+  }
+
+  categorias[t.categoria][t.tipo] += Number(t.valor);
+});
 
 
 // =======================
@@ -558,3 +570,38 @@ document.addEventListener("DOMContentLoaded", () => {
   lucide.createIcons();
 });
 
+// =======================
+// CRIAR CATEGORIA DO USUÁRIO
+// =======================
+document.getElementById("btnAddCategoria")?.addEventListener("click", async () => {
+  const nome = document.getElementById("inputNovaCategoria").value.trim();
+  const tipo = document.getElementById("tipoCategoria").value;
+
+  if (!nome) {
+    alert("Informe o nome da categoria");
+    return;
+  }
+
+  const res = await fetch("/api/categories/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({
+      nome,
+      tipo,
+      origem: "usuario" // 🔥 ESSENCIAL
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.error || "Erro ao criar categoria");
+    return;
+  }
+
+  document.getElementById("inputNovaCategoria").value = "";
+  atualizarCategorias(); // 🔥 atualiza o select
+});
