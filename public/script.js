@@ -269,18 +269,6 @@ function atualizarResumo() {
   saldo.textContent = formatarBrasileiro(ent - sai);
 }
 
-transacoes.forEach(t => {
-  if (!t.data) return;
-  if (mes && !String(t.data).startsWith(mes)) return;
-
-  if (!categorias[t.categoria]) {
-    categorias[t.categoria] = { entrada: 0, saida: 0 };
-  }
-
-  categorias[t.categoria][t.tipo] += Number(t.valor);
-});
-
-
 // =======================
 // INIT
 // =======================
@@ -314,8 +302,10 @@ function atualizarGrafico() {
 
   const categorias = {};
 
-  transacoes.forEach(t => {
-    if (mes && !t.data.startsWith(mes)) return; // ⬅️ FILTRO REAL
+transacoes.forEach(t => {
+  if (!t.data) return;
+  if (mes && !String(t.data).startsWith(mes)) return;
+
 
     if (!categorias[t.categoria]) {
       categorias[t.categoria] = { entrada: 0, saida: 0 };
