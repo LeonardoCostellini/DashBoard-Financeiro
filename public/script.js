@@ -571,7 +571,7 @@ document.addEventListener("DOMContentLoaded", () => {
 //Criar Categoria
 
 async function atualizarCategorias() {
-  const res = await fetch("/api/categories", {
+  const res = await fetch("/api/categories_user", {
     headers: { Authorization: "Bearer " + token }
   });
 
