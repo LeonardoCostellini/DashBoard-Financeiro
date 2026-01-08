@@ -1,5 +1,6 @@
 console.log('Chart.js carregado?', typeof Chart !== 'undefined');
 
+
 // =======================
 // AUTH
 // =======================
@@ -36,17 +37,25 @@ function formatarBrasileiro(v) {
   });
 }
 
+
 // =======================
 // CATEGORIAS
 // =======================
+
 async function atualizarCategorias() {
   const res = await fetch("/api/categories/list", {
-    headers: { Authorization: "Bearer " + token }
+    headers: {
+      Authorization: "Bearer " + token
+    }
   });
 
-  if (!res.ok) return;
+  if (!res.ok) {
+    console.error("Erro ao carregar categorias");
+    return;
+  }
 
   const categorias = await res.json();
+
   categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
 
   categorias
@@ -54,34 +63,71 @@ async function atualizarCategorias() {
     .forEach(cat => {
       const opt = document.createElement("option");
       opt.value = cat.nome;
-      opt.textContent = cat.nome;
+      opt.textContent =
+        cat.origem === "usuario"
+          ? `${cat.nome} (minha)`
+          : cat.nome;
+
       categoriaSelect.appendChild(opt);
     });
 }
 
-// =======================
-// TRANSAÇÕES
-// =======================
+
+
 async function carregarTransacoes() {
   const res = await fetch("/api/transactions/list", {
     headers: { Authorization: "Bearer " + token }
   });
 
+  const data = await res.json();
   if (!res.ok) return;
 
-  const data = await res.json();
-  if (!Array.isArray(data)) return;
-
-  // 🔥 NORMALIZA DATA (blindagem)
-  transacoes = data.map(t => ({
-    ...t,
-    data: t.data || t.created_at || null
-  }));
-
+  transacoes = data;
   renderizarTransacoes();
   atualizarResumo();
-  atualizarGrafico();
+  atualizarGrafico(); // ⬅️ aqui
 }
+
+// =======================
+// CRIAR CATEGORIA DO USUÁRIO
+// =======================
+document
+  .getElementById("btnAddCategoria")
+  ?.addEventListener("click", async () => {
+
+  const nome = document
+    .getElementById("inputNovaCategoria")
+    .value
+    .trim();
+
+  const tipo = document.getElementById("tipoCategoria").value;
+
+  if (!nome) {
+    alert("Informe o nome da categoria");
+    return;
+  }
+
+  const res = await fetch("/api/categories/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ nome, tipo })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.error || "Erro ao criar categoria");
+    return;
+  }
+
+  document.getElementById("inputNovaCategoria").value = "";
+  atualizarCategorias(); // 🔥 atualiza o select automaticamente
+});
+
+
 
 // =======================
 // CRIAR TRANSAÇÃO
@@ -89,11 +135,20 @@ async function carregarTransacoes() {
 form.addEventListener('submit', async e => {
   e.preventDefault();
 
-  const valor = parseValorBrasileiro(document.getElementById("valor").value);
-  if (isNaN(valor)) return alert("Valor inválido");
+  const valorInput = document.getElementById("valor").value;
+  const valor = parseValorBrasileiro(valorInput);
+
+  if (isNaN(valor)) {
+    alert("Valor inválido");
+    return;
+  }
 
   let data = form.data.value;
-  if (data.length === 7) data += "-01";
+
+  // 🔧 Converte YYYY-MM → YYYY-MM-01
+  if (data.length === 7) {
+    data = data + "-01";
+  }
 
   const payload = {
     valor,
@@ -106,16 +161,23 @@ form.addEventListener('submit', async e => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + token
+      "Authorization": "Bearer " + token
     },
     body: JSON.stringify(payload)
   });
 
-  if (!res.ok) return alert("Erro ao salvar");
+  const response = await res.json();
+  console.log("API:", response);
+
+  if (!res.ok) {
+    alert(response.error || "Erro ao salvar");
+    return;
+  }
 
   form.reset();
   carregarTransacoes();
 });
+
 
 // =======================
 // RENDER
@@ -125,49 +187,62 @@ function renderizarTransacoes() {
   const mes = filtroMes.value;
 
   transacoes.forEach(t => {
-    if (!t.data) return;
-    if (mes && !String(t.data).startsWith(mes)) return;
+    if (!mes || t.data.startsWith(mes)) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${formatarBrasileiro(Number(t.valor))}</td>
+        <td>${t.tipo}</td>
+        <td>${t.categoria}</td>
+        <td>${t.data}</td>
+        <td>
+          <button
+            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+            data-id="${t.id}"
+          >
+            Excluir
+          </button>
+        </td>
+      `;
 
-    const corValor =
-      t.tipo === "entrada" ? "text-green-500" : "text-red-500";
+      const btn = tr.querySelector("button");
+      btn.addEventListener("click", () => excluirTransacao(t.id));
 
-    const tr = document.createElement('tr');
-    tr.className = "border-b hover:bg-gray-50";
-
-    tr.innerHTML = `
-      <td class="py-3 font-semibold ${corValor}">
-        ${formatarBrasileiro(Number(t.valor))}
-      </td>
-      <td class="py-3 capitalize">${t.tipo}</td>
-      <td class="py-3">${t.categoria}</td>
-      <td class="py-3">${t.data}</td>
-      <td class="py-3 text-right">
-        <button class="border border-red-500 text-red-500 px-3 py-1 rounded"
-          data-id="${t.id}">Excluir</button>
-      </td>
-    `;
-
-    tr.querySelector("button")
-      .addEventListener("click", () => excluirTransacao(t.id));
-
-    lista.appendChild(tr);
+      lista.appendChild(tr);
+    }
   });
 }
+
 
 // =======================
 // EXCLUIR
 // =======================
+
 async function excluirTransacao(id) {
   if (!confirm("Excluir transação?")) return;
 
   const res = await fetch(`/api/transactions/delete?id=${id}`, {
     method: "DELETE",
-    headers: { Authorization: "Bearer " + token }
+    headers: {
+      Authorization: "Bearer " + token
+    }
   });
 
-  if (!res.ok) return alert("Erro ao excluir");
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    alert("Erro inesperado no servidor");
+    return;
+  }
+
+  if (!res.ok) {
+    alert(data.error || "Erro ao excluir");
+    return;
+  }
 
   carregarTransacoes();
+  atualizarGrafico();
+
 }
 
 // =======================
@@ -178,11 +253,14 @@ function atualizarResumo() {
   const mes = filtroMes.value;
 
   transacoes.forEach(t => {
-    if (!t.data) return;
-    if (mes && !String(t.data).startsWith(mes)) return;
-
-    const valor = Number(t.valor);
-    t.tipo === 'entrada' ? ent += valor : sai += valor;
+    if (!mes || t.data.startsWith(mes)) {
+      const valor = Number(t.valor);
+      if (t.tipo === 'entrada') {
+        ent += valor;
+      } else {
+        sai += valor;
+      }
+    }
   });
 
   totalEntradas.textContent = formatarBrasileiro(ent);
@@ -190,55 +268,293 @@ function atualizarResumo() {
   saldo.textContent = formatarBrasileiro(ent - sai);
 }
 
-// =======================
-// GRÁFICO
-// =======================
-function atualizarGrafico() {
-  const canvas = document.getElementById("graficoCombinado");
-  if (!canvas) return;
-
-  const ctx = canvas.getContext("2d");
-  const mes = filtroMes.value;
-  const categorias = {};
-
-  transacoes.forEach(t => {
-    if (!t.data) return;
-    if (mes && !String(t.data).startsWith(mes)) return;
-
-    if (!categorias[t.categoria]) {
-      categorias[t.categoria] = { entrada: 0, saida: 0 };
-    }
-
-    categorias[t.categoria][t.tipo] += Number(t.valor);
-  });
-
-  if (chartCombinado) chartCombinado.destroy();
-
-  chartCombinado = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: Object.keys(categorias),
-      datasets: [
-        { label: "Entradas", data: Object.values(categorias).map(c => c.entrada) },
-        { label: "Saídas", data: Object.values(categorias).map(c => c.saida) }
-      ]
-    }
-  });
-}
 
 // =======================
 // INIT
 // =======================
 document.addEventListener("DOMContentLoaded", () => {
-  filtroMes.value = new Date().toISOString().slice(0, 7);
+  const hoje = new Date();
+  const mesAtual = hoje.toISOString().slice(0, 7); // YYYY-MM
+
+  filtroMes.value = mesAtual;
+
   atualizarCategorias();
   carregarTransacoes();
+
   lucide.createIcons();
 });
+
+
 
 tipoSelect.addEventListener('change', atualizarCategorias);
 filtroMes.addEventListener('change', () => {
   renderizarTransacoes();
   atualizarResumo();
-  atualizarGrafico();
+  atualizarGrafico(); // ⬅️ ESSENCIAL
+}); 
+
+function atualizarGrafico() {
+  const canvas = document.getElementById("graficoCombinado");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const mes = filtroMes.value; // ⬅️ ESSENCIAL
+
+  const categorias = {};
+
+  transacoes.forEach(t => {
+    if (mes && !t.data.startsWith(mes)) return; // ⬅️ FILTRO REAL
+
+    if (!categorias[t.categoria]) {
+      categorias[t.categoria] = { entrada: 0, saida: 0 };
+    }
+
+    if (t.tipo === "entrada") {
+      categorias[t.categoria].entrada += Number(t.valor);
+    } else {
+      categorias[t.categoria].saida += Number(t.valor);
+    }
+  });
+
+
+  const labels = Object.keys(categorias);
+  const entradas = labels.map(cat => categorias[cat].entrada);
+  const saidas = labels.map(cat => categorias[cat].saida);
+
+  if (chartCombinado) {
+    chartCombinado.destroy();
+  }
+
+  chartCombinado = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Entradas",
+          data: entradas,
+          backgroundColor: "rgba(34,197,94,0.7)"
+        },
+        {
+          label: "Saídas",
+          data: saidas,
+          backgroundColor: "rgba(239,68,68,0.7)"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top"
+        },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              return ctx.dataset.label + ": " +
+                ctx.raw.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL"
+                });
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: value =>
+              value.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL"
+              })
+          }
+        }
+      }
+    }
+  });
+}
+
+
+
+async function carregarCategorias() {
+  const res = await fetch("/api/categorias", {
+    headers: {
+      Authorization: "Bearer " + token
+    }
+  });
+
+  if (!res.ok) return;
+
+  const data = await res.json();
+  categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
+
+  data
+    .filter(cat => cat.tipo === tipoSelect.value)
+    .forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat.nome;
+      opt.textContent = cat.nome;
+      categoriaSelect.appendChild(opt);
+    });
+}
+
+// =======================
+// METAS (BANCO)
+// =======================
+async function carregarMetas() {
+  const res = await fetch("/api/metas", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  if (!res.ok) return;
+
+  const metas = await res.json();
+  const container = document.getElementById("listaMetas");
+  container.innerHTML = "";
+
+  metas.forEach(meta => {
+    container.innerHTML += renderizarMeta(meta);
+  });
+}
+
+lucide.createIcons();
+
+function renderizarMeta(meta) {
+
+const atual = Number(meta.valor_atual);
+const total = Number(meta.valor_total);
+
+const perc = total > 0
+  ? Math.min((atual / total) * 100, 100)
+  : 0;
+
+const concluida = atual >= total && total > 0;
+
+
+  let cor = "#f97316"; // laranja
+  let statusTexto = "Em progresso";
+
+  if (perc >= 50) cor = "#eab308"; // amarelo
+  if (perc >= 100) {
+    cor = "#22c55e"; // verde
+    statusTexto = "Meta concluída 🎉";
+  }
+
+  return `
+    <div class="mb-6 p-4 bg-white shadow-md rounded-lg">
+      <h4 class="text-lg font-bold mb-1">${meta.nome}</h4>
+
+      <p class="text-sm text-gray-700 mb-2">
+        ${formatarBrasileiro(meta.valor_atual)} de ${formatarBrasileiro(meta.valor_total)}
+      </p>
+
+      <div class="w-full bg-gray-200 rounded-lg h-6 mt-2 overflow-hidden">
+        <div
+          class="h-full flex items-center justify-center text-white text-sm font-semibold transition-all duration-500"
+          style="width:${perc}%; background-color:${cor}">
+          ${perc.toFixed(1)}%
+        </div>
+      </div>
+
+      <p class="mt-2 font-semibold ${concluida ? "text-green-600" : "text-gray-600"}">
+        ${statusTexto}
+      </p>
+
+      ${
+        concluida
+          ? `
+            <button onclick="finalizarMeta(${meta.id})"
+              class="mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded">
+              Finalizar Meta
+            </button>
+          `
+          : `
+            <div class="mt-3 flex gap-2">
+              <input
+                type="text"
+                placeholder="Adicionar valor"
+                id="novaMeta-${meta.id}"
+                class="border border-gray-300 rounded px-2 py-1 w-full"
+              />
+              <button onclick="atualizarMeta(${meta.id})"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded">
+                Atualizar
+              </button>
+            </div>
+          `
+      }
+    </div>
+  `;
+}
+
+
+
+
+document.getElementById("btnAddMeta").addEventListener("click", async () => {
+  const nome = document.getElementById("nomeMeta").value.trim();
+  const valor_total = parseValorBrasileiro(document.getElementById("valorMeta").value);
+  const valor_atual = parseValorBrasileiro(document.getElementById("valorAtualMeta").value);
+
+  if (!nome || isNaN(valor_total) || isNaN(valor_atual)) {
+    alert("Preencha os dados corretamente.");
+    return;
+  }
+
+  const res = await fetch("/api/metas", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ nome, valor_total, valor_atual })
+  });
+
+  if (!res.ok) return alert("Erro ao criar meta");
+
+  document.getElementById("nomeMeta").value = "";
+  document.getElementById("valorMeta").value = "";
+  document.getElementById("valorAtualMeta").value = "";
+
+  carregarMetas();
 });
+
+async function atualizarMeta(id) {
+  const input = document.getElementById(`novaMeta-${id}`).value;
+  const incremento = parseValorBrasileiro(input);
+
+  if (isNaN(incremento) || incremento <= 0) {
+    alert("Valor inválido");
+    return;
+  }
+
+  await fetch("/api/metas", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ id, incremento })
+  });
+
+  carregarMetas();
+}
+
+
+
+async function finalizarMeta(id) {
+  if (!confirm("Deseja finalizar esta meta?")) return;
+
+  await fetch(`/api/metas?id=${id}`, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  carregarMetas();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  carregarMetas();     // ⬅️ ISSO FAZ PUXAR DO BANCO
+  lucide.createIcons();
+});
+
