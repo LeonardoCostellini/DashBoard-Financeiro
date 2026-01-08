@@ -41,6 +41,43 @@ function formatarBrasileiro(v) {
 // =======================
 // CATEGORIAS
 // =======================
+const categorias = {
+  entrada: [
+    'Salário',
+    'Bonificação',
+    'Vale Alimentação',
+    'Dinheiro Emprestado',
+    '13°'
+  ],
+  saida: [
+    'MORADIA (ALUGUEL/FINANCIAMENTO)',
+    'CONDOMÍNIO',
+    'SUPERMERCADO (VALOR MÉDIO)',
+    'LUZ (INCLUSO NO CONDOMÍNIO?)',
+    'GÁS (INCLUSO NO CONDOMÍNIO?)',
+    'IPTU (INCLUSO NO CONDOMÍNIO?)',
+    'PLANO DE SAÚDE',
+    'SEGURO DE VIDA',
+    'INVESTIMENTOS',
+    'FALCULDADE',
+    'RESERVA DE EMERGENCIA',
+    'CARTÃO DE CRÉDITO',
+    'COMBUSTÍVEL',
+    'UNIMED',
+    'GASTOS COM ANIMAIS',
+    'GASTOS IMPREVISTOS',
+    'GASTOS COM TRANSPORTE',
+    'GASTOS COM VEÍCULO',
+    'INTERNET RESIDENCIAL',
+    'ASSINATURAS(EX:NETFLIX)',
+    'PADARIA/FEIRA',
+    'SAÍDAS/CINEMA/LAZER',
+    'CABELEIRO',
+    'TARIFAS BANCÁRIAS',
+    'TELEFONIA/CELULAR'
+  ]
+
+};
 
 async function atualizarCategorias() {
   const res = await fetch("/api/categories/list", {
@@ -63,15 +100,10 @@ async function atualizarCategorias() {
     .forEach(cat => {
       const opt = document.createElement("option");
       opt.value = cat.nome;
-      opt.textContent =
-        cat.origem === "usuario"
-          ? `${cat.nome} (minha)`
-          : cat.nome;
-
+      opt.textContent = cat.nome;
       categoriaSelect.appendChild(opt);
     });
 }
-
 
 
 async function carregarTransacoes() {
@@ -87,46 +119,6 @@ async function carregarTransacoes() {
   atualizarResumo();
   atualizarGrafico(); // ⬅️ aqui
 }
-
-// =======================
-// CRIAR CATEGORIA DO USUÁRIO
-// =======================
-document
-  .getElementById("btnAddCategoria")
-  ?.addEventListener("click", async () => {
-
-  const nome = document
-    .getElementById("inputNovaCategoria")
-    .value
-    .trim();
-
-  const tipo = document.getElementById("tipoCategoria").value;
-
-  if (!nome) {
-    alert("Informe o nome da categoria");
-    return;
-  }
-
-  const res = await fetch("/api/categories/create", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
-    body: JSON.stringify({ nome, tipo })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    alert(data.error || "Erro ao criar categoria");
-    return;
-  }
-
-  document.getElementById("inputNovaCategoria").value = "";
-  atualizarCategorias(); // 🔥 atualiza o select automaticamente
-});
-
 
 
 // =======================
@@ -182,38 +174,53 @@ form.addEventListener('submit', async e => {
 // =======================
 // RENDER
 // =======================
-
 function renderizarTransacoes() {
   lista.innerHTML = '';
   const mes = filtroMes.value;
 
   transacoes.forEach(t => {
-    if (!t.data) return; // 🔥 blindagem
-    if (mes && !String(t.data).startsWith(mes)) return;
+    if (!mes || t.data.startsWith(mes)) {
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${formatarBrasileiro(Number(t.valor))}</td>
-      <td>${t.tipo}</td>
-      <td>${t.categoria}</td>
-      <td>${t.data}</td>
-      <td>
-        <button
-          class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-          data-id="${t.id}"
-        >
-          Excluir
-        </button>
-      </td>
-    `;
+      const corValor =
+        t.tipo === "entrada" ? "text-green-500" : "text-red-500";
 
-    tr.querySelector("button")
-      .addEventListener("click", () => excluirTransacao(t.id));
+      const tr = document.createElement('tr');
+      tr.className = "border-b hover:bg-gray-50";
 
-    lista.appendChild(tr);
+      tr.innerHTML = `
+        <td class="py-3 font-semibold ${corValor}">
+          ${formatarBrasileiro(Number(t.valor))}
+        </td>
+
+        <td class="py-3 capitalize">
+          ${t.tipo}
+        </td>
+
+        <td class="py-3">
+          ${t.categoria}
+        </td>
+
+        <td class="py-3">
+          ${t.data}
+        </td>
+
+        <td class="py-3 text-right">
+          <button
+            class="border border-red-500 text-red-500 px-3 py-1 rounded
+                   hover:bg-red-500 hover:text-white transition"
+            data-id="${t.id}">
+            Excluir
+          </button>
+        </td>
+      `;
+
+      const btn = tr.querySelector("button");
+      btn.addEventListener("click", () => excluirTransacao(t.id));
+
+      lista.appendChild(tr);
+    }
   });
 }
-
 
 
 // =======================
@@ -251,23 +258,26 @@ async function excluirTransacao(id) {
 // =======================
 // RESUMO
 // =======================
-
 function atualizarResumo() {
   let ent = 0, sai = 0;
   const mes = filtroMes.value;
 
   transacoes.forEach(t => {
-    if (!t.data) return;
-    if (mes && !String(t.data).startsWith(mes)) return;
-
-    const valor = Number(t.valor);
-    t.tipo === 'entrada' ? ent += valor : sai += valor;
+    if (!mes || t.data.startsWith(mes)) {
+      const valor = Number(t.valor);
+      if (t.tipo === 'entrada') {
+        ent += valor;
+      } else {
+        sai += valor;
+      }
+    }
   });
 
   totalEntradas.textContent = formatarBrasileiro(ent);
   totalSaidas.textContent = formatarBrasileiro(sai);
   saldo.textContent = formatarBrasileiro(ent - sai);
 }
+
 
 // =======================
 // INIT
@@ -302,10 +312,8 @@ function atualizarGrafico() {
 
   const categorias = {};
 
-transacoes.forEach(t => {
-  if (!t.data) return;
-  if (mes && !String(t.data).startsWith(mes)) return;
-
+  transacoes.forEach(t => {
+    if (mes && !t.data.startsWith(mes)) return; // ⬅️ FILTRO REAL
 
     if (!categorias[t.categoria]) {
       categorias[t.categoria] = { entrada: 0, saida: 0 };
@@ -560,38 +568,3 @@ document.addEventListener("DOMContentLoaded", () => {
   lucide.createIcons();
 });
 
-// =======================
-// CRIAR CATEGORIA DO USUÁRIO
-// =======================
-document.getElementById("btnAddCategoria")?.addEventListener("click", async () => {
-  const nome = document.getElementById("inputNovaCategoria").value.trim();
-  const tipo = document.getElementById("tipoCategoria").value;
-
-  if (!nome) {
-    alert("Informe o nome da categoria");
-    return;
-  }
-
-  const res = await fetch("/api/categories/create", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
-    body: JSON.stringify({
-      nome,
-      tipo,
-      origem: "usuario" // 🔥 ESSENCIAL
-    })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    alert(data.error || "Erro ao criar categoria");
-    return;
-  }
-
-  document.getElementById("inputNovaCategoria").value = "";
-  atualizarCategorias(); // 🔥 atualiza o select
-});
