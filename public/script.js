@@ -64,8 +64,6 @@ async function atualizarCategorias() {
     console.error("Erro ao carregar categorias");
   }
 }
-
-
   const categorias = await res.json();
 
   categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
@@ -78,7 +76,7 @@ async function atualizarCategorias() {
       opt.textContent = cat.nome;
       categoriaSelect.appendChild(opt);
     });
-}
+
 
 
 async function carregarTransacoes() {
