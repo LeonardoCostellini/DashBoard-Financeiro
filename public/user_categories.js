@@ -1,4 +1,4 @@
-const token = localStorage.getItem("token");
+// NÃO declare token aqui
 
 // -----------------------
 // BUSCAR
@@ -6,7 +6,7 @@ const token = localStorage.getItem("token");
 async function getUserCategories(tipo) {
   const res = await fetch(`/api/user_categories?tipo=${tipo}`, {
     headers: {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${window.token}`
     }
   });
 
@@ -22,7 +22,7 @@ async function createUserCategory(nome, tipo) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${window.token}`
     },
     body: JSON.stringify({ nome, tipo })
   });
