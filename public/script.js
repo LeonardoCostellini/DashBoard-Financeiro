@@ -39,48 +39,12 @@ function formatarBrasileiro(v) {
 
 
 // =======================
-// CATEGORIAS
+// CATEGORIAS - Removidas categorias hardcoded
 // =======================
-const categorias = {
-  entrada: [
-    'Salário',
-    'Bonificação',
-    'Vale Alimentação',
-    'Dinheiro Emprestado',
-    '13°'
-  ],
-  saida: [
-    'MORADIA (ALUGUEL/FINANCIAMENTO)',
-    'CONDOMÍNIO',
-    'SUPERMERCADO (VALOR MÉDIO)',
-    'LUZ (INCLUSO NO CONDOMÍNIO?)',
-    'GÁS (INCLUSO NO CONDOMÍNIO?)',
-    'IPTU (INCLUSO NO CONDOMÍNIO?)',
-    'PLANO DE SAÚDE',
-    'SEGURO DE VIDA',
-    'INVESTIMENTOS',
-    'FALCULDADE',
-    'RESERVA DE EMERGENCIA',
-    'CARTÃO DE CRÉDITO',
-    'COMBUSTÍVEL',
-    'UNIMED',
-    'GASTOS COM ANIMAIS',
-    'GASTOS IMPREVISTOS',
-    'GASTOS COM TRANSPORTE',
-    'GASTOS COM VEÍCULO',
-    'INTERNET RESIDENCIAL',
-    'ASSINATURAS(EX:NETFLIX)',
-    'PADARIA/FEIRA',
-    'SAÍDAS/CINEMA/LAZER',
-    'CABELEIRO',
-    'TARIFAS BANCÁRIAS',
-    'TELEFONIA/CELULAR'
-  ]
-
-};
+// As categorias agora vêm do banco de dados via API
 
 async function atualizarCategorias() {
-  const res = await fetch("/api/categories/list", {
+  const res = await fetch("/api/user_categories/categorie_user", {
     headers: {
       Authorization: "Bearer " + token
     }
@@ -301,7 +265,7 @@ filtroMes.addEventListener('change', () => {
   renderizarTransacoes();
   atualizarResumo();
   atualizarGrafico(); // ⬅️ ESSENCIAL
-}); 
+});
 
 function atualizarGrafico() {
   const canvas = document.getElementById("graficoCombinado");
@@ -432,14 +396,14 @@ lucide.createIcons();
 
 function renderizarMeta(meta) {
 
-const atual = Number(meta.valor_atual);
-const total = Number(meta.valor_total);
+  const atual = Number(meta.valor_atual);
+  const total = Number(meta.valor_total);
 
-const perc = total > 0
-  ? Math.min((atual / total) * 100, 100)
-  : 0;
+  const perc = total > 0
+    ? Math.min((atual / total) * 100, 100)
+    : 0;
 
-const concluida = atual >= total && total > 0;
+  const concluida = atual >= total && total > 0;
 
 
   let cor = "#f97316"; // laranja
@@ -471,15 +435,14 @@ const concluida = atual >= total && total > 0;
         ${statusTexto}
       </p>
 
-      ${
-        concluida
-          ? `
+      ${concluida
+      ? `
             <button onclick="finalizarMeta(${meta.id})"
               class="mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded">
               Finalizar Meta
             </button>
           `
-          : `
+      : `
             <div class="mt-3 flex gap-2">
               <input
                 type="text"
@@ -493,7 +456,7 @@ const concluida = atual >= total && total > 0;
               </button>
             </div>
           `
-      }
+    }
     </div>
   `;
 }
@@ -568,3 +531,223 @@ document.addEventListener("DOMContentLoaded", () => {
   lucide.createIcons();
 });
 
+
+
+// =======================
+// GERENCIAMENTO DE CATEGORIAS PERSONALIZADAS
+// =======================
+
+const modalCategorias = document.getElementById("modalCategorias");
+const btnMenuCategorias = document.getElementById("btnMenuCategorias");
+const btnFecharModal = document.getElementById("btnFecharModal");
+const formCategoria = document.getElementById("formCategoria");
+const listaCategoriasUsuario = document.getElementById("listaCategoriasUsuario");
+const inputNomeCategoria = document.getElementById("inputNomeCategoria");
+const inputTipoCategoria = document.getElementById("inputTipoCategoria");
+const categoriaEditId = document.getElementById("categoriaEditId");
+const btnCancelarEdicao = document.getElementById("btnCancelarEdicao");
+const tituloFormCategoria = document.getElementById("tituloFormCategoria");
+const btnTextoSalvar = document.getElementById("btnTextoSalvar");
+
+// Abrir modal
+btnMenuCategorias.addEventListener("click", () => {
+  modalCategorias.classList.remove("hidden");
+  carregarCategoriasUsuario();
+  lucide.createIcons();
+});
+
+// Fechar modal
+btnFecharModal.addEventListener("click", () => {
+  modalCategorias.classList.add("hidden");
+  limparFormulario();
+});
+
+// Fechar modal ao clicar fora
+modalCategorias.addEventListener("click", (e) => {
+  if (e.target === modalCategorias) {
+    modalCategorias.classList.add("hidden");
+    limparFormulario();
+  }
+});
+
+// Carregar categorias do usuário
+async function carregarCategoriasUsuario() {
+  try {
+    const res = await fetch("/api/user_categories/categorie_user", {
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    if (!res.ok) {
+      console.error("Erro ao carregar categorias");
+      return;
+    }
+
+    const categorias = await res.json();
+
+    // Filtrar apenas categorias do usuário (origem = 'usuario')
+    const categoriasUsuario = categorias.filter(cat => cat.origem === 'usuario');
+
+    listaCategoriasUsuario.innerHTML = "";
+
+    if (categoriasUsuario.length === 0) {
+      listaCategoriasUsuario.innerHTML = `
+        <div class="text-center text-gray-500 py-8">
+          <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+          <p>Você ainda não tem categorias personalizadas.</p>
+          <p class="text-sm">Crie sua primeira categoria acima!</p>
+        </div>
+      `;
+      lucide.createIcons();
+      return;
+    }
+
+    categoriasUsuario.forEach(cat => {
+      const div = document.createElement("div");
+      div.className = "flex items-center justify-between bg-white p-4 rounded-lg shadow hover:shadow-md transition-all";
+
+      const corTipo = cat.tipo === "entrada" ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50";
+
+      div.innerHTML = `
+        <div class="flex items-center gap-3">
+          <span class="${corTipo} px-3 py-1 rounded-full text-sm font-semibold capitalize">
+            ${cat.tipo}
+          </span>
+          <span class="font-medium text-gray-800">${cat.nome}</span>
+        </div>
+        <div class="flex gap-2">
+          <button 
+            onclick="editarCategoria(${cat.id}, '${cat.nome.replace(/'/g, "\\'")}', '${cat.tipo}')"
+            class="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
+            title="Editar">
+            <i data-lucide="edit-2" class="w-5 h-5"></i>
+          </button>
+          <button 
+            onclick="deletarCategoria(${cat.id}, '${cat.nome.replace(/'/g, "\\'")}')"
+            class="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
+            title="Deletar">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+          </button>
+        </div>
+      `;
+
+      listaCategoriasUsuario.appendChild(div);
+    });
+
+    lucide.createIcons();
+
+  } catch (err) {
+    console.error("Erro ao carregar categorias:", err);
+  }
+}
+
+// Criar ou atualizar categoria
+formCategoria.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const nome = inputNomeCategoria.value.trim();
+  const tipo = inputTipoCategoria.value;
+  const id = categoriaEditId.value;
+
+  if (!nome || !tipo) {
+    alert("Preencha todos os campos!");
+    return;
+  }
+
+  try {
+    let res;
+
+    if (id) {
+      // Atualizar
+      res = await fetch("/api/user_categories/categorie_user", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({ id, nome, tipo })
+      });
+    } else {
+      // Criar
+      res = await fetch("/api/user_categories/categorie_user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({ nome, tipo })
+      });
+    }
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Erro ao salvar categoria");
+      return;
+    }
+
+    alert(id ? "Categoria atualizada!" : "Categoria criada!");
+    limparFormulario();
+    carregarCategoriasUsuario();
+    atualizarCategorias(); // Atualizar o select de categorias no formulário principal
+
+  } catch (err) {
+    console.error("Erro ao salvar categoria:", err);
+    alert("Erro ao salvar categoria");
+  }
+});
+
+// Editar categoria
+window.editarCategoria = function (id, nome, tipo) {
+  categoriaEditId.value = id;
+  inputNomeCategoria.value = nome;
+  inputTipoCategoria.value = tipo;
+
+  tituloFormCategoria.textContent = "Editar Categoria";
+  btnTextoSalvar.textContent = "Salvar Alterações";
+  btnCancelarEdicao.classList.remove("hidden");
+
+  // Scroll para o formulário
+  formCategoria.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+// Cancelar edição
+btnCancelarEdicao.addEventListener("click", limparFormulario);
+
+// Deletar categoria
+window.deletarCategoria = async function (id, nome) {
+  if (!confirm(`Tem certeza que deseja deletar a categoria "${nome}"?`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/user_categories/categorie_user?id=${id}`, {
+      method: "DELETE",
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Erro ao deletar categoria");
+      return;
+    }
+
+    alert("Categoria deletada!");
+    carregarCategoriasUsuario();
+    atualizarCategorias(); // Atualizar o select de categorias no formulário principal
+
+  } catch (err) {
+    console.error("Erro ao deletar categoria:", err);
+    alert("Erro ao deletar categoria");
+  }
+};
+
+// Limpar formulário
+function limparFormulario() {
+  categoriaEditId.value = "";
+  inputNomeCategoria.value = "";
+  inputTipoCategoria.value = "";
+  tituloFormCategoria.textContent = "Nova Categoria";
+  btnTextoSalvar.textContent = "Criar Categoria";
+  btnCancelarEdicao.classList.add("hidden");
+}
