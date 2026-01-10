@@ -41,16 +41,8 @@ async function register() {
 }
 
 async function login() {
-  const emailInput = document.getElementById("email");
-  const senhaInput = document.getElementById("senha");
-
-  if (!emailInput || !senhaInput) {
-    alert("Campos de login não encontrados");
-    return;
-  }
-
-  const email = emailInput.value.trim();
-  const password = senhaInput.value.trim();
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("senha").value;
 
   if (!email || !password) {
     alert("Preencha email e senha");
@@ -64,7 +56,16 @@ async function login() {
       body: JSON.stringify({ email, password })
     });
 
-    const data = await res.json();
+    const text = await res.text(); // ⬅️ MUDANÇA AQUI
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.error("Resposta não JSON:", text);
+      alert("Erro no servidor. Tente novamente.");
+      return;
+    }
 
     if (!res.ok) {
       alert(data.error || "Login inválido");
@@ -72,10 +73,41 @@ async function login() {
     }
 
     localStorage.setItem("token", data.token);
-    window.location.href = "/index.html";
+    window.location.href = "/";
 
   } catch (err) {
     console.error(err);
-    alert("Erro de conexão");
+    alert("Erro de conexão com o servidor");
   }
 }
+
+export default async function handler(req, res) {
+  try {
+    const { action } = req.query;
+
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Método não permitido" });
+    }
+
+    if (action === "login") {
+      return res.status(200).json({
+        token: "TOKEN_TESTE"
+      });
+    }
+
+    if (action === "register") {
+      return res.status(201).json({
+        message: "Usuário criado"
+      });
+    }
+
+    return res.status(400).json({ error: "Ação inválida" });
+
+  } catch (err) {
+    console.error("AUTH ERROR:", err);
+    return res.status(500).json({
+      error: "Erro interno no servidor"
+    });
+  }
+}
+
