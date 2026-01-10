@@ -44,16 +44,27 @@ function formatarBrasileiro(v) {
 // As categorias agora vêm do banco de dados via API
 
 async function atualizarCategorias() {
-  const res = await fetch("/api/user_categories/categorie_user", {
-    headers: {
-      Authorization: "Bearer " + token
-    }
-  });
+  try {
+    const token = localStorage.getItem("token");
 
-  if (!res.ok) {
+    const res = await fetch("/api/user_categories/categorie_user", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("Erro ao carregar categorias");
+    }
+
+    const categorias = await res.json();
+    console.log("Categorias:", categorias);
+
+  } catch (err) {
     console.error("Erro ao carregar categorias");
-    return;
   }
+}
+
 
   const categorias = await res.json();
 
@@ -721,7 +732,7 @@ window.deletarCategoria = async function (id, nome) {
 
   try {
     const res = await fetch(`/api/user_categories/categorie_user?id=${id}`, {
-      method: "DELETE",
+  method: "DELETE",
       headers: { Authorization: "Bearer " + token }
     });
 

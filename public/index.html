@@ -218,35 +218,8 @@
 
 
   <script src="script.js"></script>
+
+
 </body>
 
-<script>
-  const btnMenu = document.getElementById("btnMenuCategorias");
-  const submenu = document.getElementById("submenuCategorias");
-  const modal = document.getElementById("modalCategorias");
-  const btnAbrirCategorias = document.getElementById("btnAbrirCategorias");
-  const btnFecharModal = document.getElementById("btnFecharModal");
 
-  // Abrir / fechar submenu
-  btnMenu.addEventListener("click", () => {
-    submenu.classList.toggle("hidden");
-  });
-
-  // Abrir modal de categorias
-  btnAbrirCategorias.addEventListener("click", () => {
-    submenu.classList.add("hidden");
-    modal.classList.remove("hidden");
-  });
-
-  // Fechar modal
-  btnFecharModal.addEventListener("click", () => {
-    modal.classList.add("hidden");
-  });
-
-  // Clicar fora fecha submenu
-  document.addEventListener("click", (e) => {
-    if (!btnMenu.contains(e.target) && !submenu.contains(e.target)) {
-      submenu.classList.add("hidden");
-    }
-  });
-</script>
