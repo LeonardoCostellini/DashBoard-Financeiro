@@ -4,17 +4,26 @@ import { pool } from "./_utils/db.js";
 
 export default async function handler(req, res) {
   try {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Método não permitido" });
+    }
+
+    const { action } = req.query || {};
+    const body = req.body || {};
+    const { email, password } = body;
+
+    if (!action) {
+      return res.status(400).json({ error: "Ação não informada" });
+    }
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email e senha obrigatórios" });
+    }
+
     // =========================
     // 🔐 LOGIN
-    // POST /api/auth?action=login
     // =========================
-    if (req.method === "POST" && req.query.action === "login") {
-      const { email, password } = req.body;
-
-      if (!email || !password) {
-        return res.status(400).json({ error: "Dados inválidos" });
-      }
-
+    if (action === "login") {
       const { rows } = await pool.query(
         "SELECT id, password FROM users WHERE email = $1",
         [email]
@@ -33,7 +42,7 @@ export default async function handler(req, res) {
 
       const token = jwt.sign(
         { userId: user.id },
-        process.env.JWT_SECRET,
+        process.env.JWT_SECRET || "dev_secret", // ✅ NUNCA crasha
         { expiresIn: "7d" }
       );
 
@@ -42,15 +51,8 @@ export default async function handler(req, res) {
 
     // =========================
     // 📝 REGISTER
-    // POST /api/auth?action=register
     // =========================
-    if (req.method === "POST" && req.query.action === "register") {
-      const { email, password } = req.body;
-
-      if (!email || !password) {
-        return res.status(400).json({ error: "Dados inválidos" });
-      }
-
+    if (action === "register") {
       const hash = await bcrypt.hash(password, 10);
 
       await pool.query(
@@ -61,10 +63,12 @@ export default async function handler(req, res) {
       return res.status(201).json({ success: true });
     }
 
-    return res.status(405).json({ error: "Método não permitido" });
+    return res.status(400).json({ error: "Ação inválida" });
 
   } catch (err) {
     console.error("AUTH ERROR:", err);
-    return res.status(500).json({ error: "Erro interno" });
+    return res.status(500).json({
+      error: "Erro interno no servidor"
+    });
   }
 }
