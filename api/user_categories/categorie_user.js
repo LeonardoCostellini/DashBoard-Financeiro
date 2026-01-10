@@ -30,21 +30,33 @@ export default async function handler(req, res) {
     // 📌 LISTAR CATEGORIAS
     // GET /api/user_categories/list
     // =========================
-    if (req.method === "GET") {
-      const { rows } = await pool.query(
-        `
-        SELECT id, nome, tipo, 'padrao' AS origem FROM categories
-        UNION ALL
-        SELECT id, nome, tipo, 'usuario' AS origem
-        FROM user_categories
-        WHERE user_id = $1
-        ORDER BY nome ASC
-        `,
-        [userId]
-      );
+if (req.method === "GET") {
+  const { rows } = await pool.query(
+    `
+    SELECT 
+      id,
+      name AS nome,
+      type AS tipo,
+      'padrao' AS origem
+    FROM categories
 
-      return res.status(200).json(rows);
-    }
+    UNION ALL
+
+    SELECT 
+      id,
+      nome,
+      tipo,
+      'usuario' AS origem
+    FROM user_categories
+    WHERE user_id = $1
+
+    ORDER BY nome ASC
+    `,
+    [userId]
+  );
+
+  return res.status(200).json(rows);
+}
 
     // =========================
     // ➕ CRIAR CATEGORIA
