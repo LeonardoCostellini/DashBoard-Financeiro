@@ -1,14 +1,6 @@
 async function register() {
-  const emailInput = document.getElementById("email");
-  const senhaInput = document.getElementById("senha");
-
-  if (!emailInput || !senhaInput) {
-    alert("Campos de cadastro não encontrados");
-    return;
-  }
-
-  const email = emailInput.value.trim();
-  const password = senhaInput.value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("senha").value.trim();
 
   if (!email || !password) {
     alert("Preencha email e senha");
@@ -16,7 +8,7 @@ async function register() {
   }
 
   try {
-    const res = await fetch("/api/auth?action=register", {
+    const res = await fetch("/api/autenticacao?acao=register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
@@ -39,8 +31,8 @@ async function register() {
 }
 
 async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("senha").value;
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("senha").value.trim();
 
   if (!email || !password) {
     alert("Preencha email e senha");
@@ -48,7 +40,7 @@ async function login() {
   }
 
   try {
-    const res = await fetch("/api/auth?action=login", {
+    const res = await fetch("/api/autenticacao?acao=login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
@@ -66,6 +58,6 @@ async function login() {
 
   } catch (err) {
     console.error(err);
-    alert("Erro de conexão com o servidor");
+    alert("Erro de conexão");
   }
 }
