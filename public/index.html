@@ -18,28 +18,30 @@
         <header class="flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <!-- Menu Hamburguer -->
-                <button id="btnMenuCategorias" class="p-2 hover:bg-blue-100 rounded-lg transition-all" title="Gerenciar Categorias">
+                <button id="btnMenuCategorias" class="p-2 hover:bg-blue-100 rounded-lg transition-all"
+                    title="Gerenciar Categorias">
                     <i data-lucide="menu" class="w-8 h-8 text-blue-700"></i>
                 </button>
                 <h1 class="text-5xl font-extrabold text-blue-800 flex items-center gap-3">
                     <i data-lucide="wallet" class="w-8 h-8 text-blue-700"></i> Controle Financeiro
                 </h1>
             </div>
-            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <button onclick="logout()"
+                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
                 <i data-lucide="log-out" class="w-5 h-5"></i> Sair
             </button>
         </header>
 
         <div id="submenuCategorias"
-     class="absolute mt-2 left-6 bg-white rounded-xl shadow-xl border border-gray-200 w-56 hidden z-40">
+            class="absolute mt-2 left-6 bg-white rounded-xl shadow-xl border border-gray-200 w-56 hidden z-40">
 
-    <button id="btnAbrirCategorias"
-        class="w-full px-4 py-3 text-left hover:bg-blue-50 flex items-center gap-3 text-gray-700">
-        <i data-lucide="folder-plus" class="w-5 h-5 text-blue-600"></i>
-        Criar Categoria
-    </button>
+            <button id="btnAbrirCategorias"
+                class="w-full px-4 py-3 text-left hover:bg-blue-50 flex items-center gap-3 text-gray-700">
+                <i data-lucide="folder-plus" class="w-5 h-5 text-blue-600"></i>
+                Criar Categoria
+            </button>
 
-</div>
+        </div>
 
 
 
@@ -47,13 +49,17 @@
         <form id="form-transacao" class="bg-white p-8 rounded-2xl shadow-lg space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <input type="text" id="valor" inputmode="decimal" pattern="[\d.,]*" name="valor"
-                    placeholder="Valor (R$)" class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
-                <select id="tipo" class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
+                    placeholder="Valor (R$)"
+                    class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
+                <select id="tipo"
+                    class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
                     <option value="entrada">Entrada</option>
                     <option value="saida">Saída</option>
                 </select>
-                <select id="categoria" class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none"></select>
-                <input type="month" id="data" required class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
+                <select id="categoria"
+                    class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none"></select>
+                <input type="month" id="data" required
+                    class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
             </div>
             <div class="text-right">
                 <button type="submit"
@@ -68,28 +74,33 @@
             <label for="filtro-mes" class="font-medium text-lg">
                 <i data-lucide="calendar" class="w-6 h-6 text-blue-700"></i> Filtrar por mês:
             </label>
-            <input type="month" id="filtro-mes" class="p-3 border border-gray-300 rounded-lg w-auto focus:ring-2 ring-blue-400 focus:outline-none">
+            <input type="month" id="filtro-mes"
+                class="p-3 border border-gray-300 rounded-lg w-auto focus:ring-2 ring-blue-400 focus:outline-none">
         </div>
 
         <!-- Resumo com cards -->
         <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             <div class="bg-green-50 border border-green-200 p-6 rounded-xl shadow-lg flex items-center gap-4">
                 <i data-lucide="arrow-down-circle" class="text-green-600 w-10 h-10"></i>
-                <p class="text-lg font-medium">Entradas:<br><span id="total-entradas" class="text-green-700 text-2xl font-bold">R$ 0,00</span></p>
+                <p class="text-lg font-medium">Entradas:<br><span id="total-entradas"
+                        class="text-green-700 text-2xl font-bold">R$ 0,00</span></p>
             </div>
             <div class="bg-red-50 border border-red-200 p-6 rounded-xl shadow-lg flex items-center gap-4">
                 <i data-lucide="arrow-up-circle" class="text-red-600 w-10 h-10"></i>
-                <p class="text-lg font-medium">Saídas:<br><span id="total-saidas" class="text-red-700 text-2xl font-bold">R$ 0,00</span></p>
+                <p class="text-lg font-medium">Saídas:<br><span id="total-saidas"
+                        class="text-red-700 text-2xl font-bold">R$ 0,00</span></p>
             </div>
             <div class="bg-blue-50 border border-blue-200 p-6 rounded-xl shadow-lg flex items-center gap-4">
                 <i data-lucide="dollar-sign" class="text-blue-600 w-10 h-10"></i>
-                <p class="text-lg font-medium">Saldo:<br><span id="saldo" class="text-blue-700 text-2xl font-bold">R$ 0,00</span></p>
+                <p class="text-lg font-medium">Saldo:<br><span id="saldo" class="text-blue-700 text-2xl font-bold">R$
+                        0,00</span></p>
             </div>
         </section>
 
         <!-- Lista de transações -->
         <div class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i data-lucide="list" class="w-6 h-6"></i> Transações</h2>
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i data-lucide="list" class="w-6 h-6"></i>
+                Transações</h2>
             <div class="overflow-auto max-h-80">
                 <table class="min-w-full text-sm divide-y divide-gray-200">
                     <thead class="bg-gray-50 text-gray-600">
@@ -108,19 +119,24 @@
 
         <!-- Gráfico -->
         <section class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i data-lucide="bar-chart" class="w-6 h-6"></i> Entradas x Saídas por Categoria</h2>
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i data-lucide="bar-chart"
+                    class="w-6 h-6"></i> Entradas x Saídas por Categoria</h2>
             <canvas id="graficoCombinado" class="w-full h-72"></canvas>
-             
-        <canvas id="grafico"></canvas>
+
+            <canvas id="grafico"></canvas>
         </section>
 
         <!-- Metas -->
         <section class="bg-white p-6 rounded-xl shadow-lg space-y-6">
-            <h2 class="text-xl font-semibold flex items-center gap-2"><i data-lucide="target" class="w-6 h-6"></i> Minhas Metas</h2>
+            <h2 class="text-xl font-semibold flex items-center gap-2"><i data-lucide="target" class="w-6 h-6"></i>
+                Minhas Metas</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <input type="text" id="nomeMeta" placeholder="Nome da Meta" class="p-4 border border-gray-300 rounded-lg w-full">
-                <input type="text" id="valorMeta" placeholder="Valor Objetivo (R$)" class="p-4 border border-gray-300 rounded-lg w-full">
-                <input type="text" id="valorAtualMeta" placeholder="Valor Atual (R$)" class="p-4 border border-gray-300 rounded-lg w-full">
+                <input type="text" id="nomeMeta" placeholder="Nome da Meta"
+                    class="p-4 border border-gray-300 rounded-lg w-full">
+                <input type="text" id="valorMeta" placeholder="Valor Objetivo (R$)"
+                    class="p-4 border border-gray-300 rounded-lg w-full">
+                <input type="text" id="valorAtualMeta" placeholder="Valor Atual (R$)"
+                    class="p-4 border border-gray-300 rounded-lg w-full">
                 <button id="btnAddMeta"
                     class="bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-all ease-in-out duration-200 flex items-center gap-2">
                     <i data-lucide="plus" class="w-5 h-5"></i> Criar Meta
@@ -132,7 +148,8 @@
     </div>
 
     <!-- Modal de Gerenciamento de Categorias -->
-    <div id="modalCategorias" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div id="modalCategorias"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             <!-- Header -->
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex justify-between items-center">
@@ -156,15 +173,9 @@
                     <form id="formCategoria" class="space-y-4">
                         <input type="hidden" id="categoriaEditId">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input 
-                                type="text" 
-                                id="inputNomeCategoria" 
-                                placeholder="Nome da categoria" 
-                                required
+                            <input type="text" id="inputNomeCategoria" placeholder="Nome da categoria" required
                                 class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
-                            <select 
-                                id="inputTipoCategoria" 
-                                required
+                            <select id="inputTipoCategoria" required
                                 class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
                                 <option value="">Selecione o tipo</option>
                                 <option value="entrada">Entrada</option>
@@ -172,15 +183,12 @@
                             </select>
                         </div>
                         <div class="flex gap-3">
-                            <button 
-                                type="submit" 
+                            <button type="submit"
                                 class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2">
                                 <i data-lucide="save" class="w-5 h-5"></i>
                                 <span id="btnTextoSalvar">Criar Categoria</span>
                             </button>
-                            <button 
-                                type="button" 
-                                id="btnCancelarEdicao"
+                            <button type="button" id="btnCancelarEdicao"
                                 class="bg-gray-400 text-white px-6 py-3 rounded-lg hover:bg-gray-500 transition-all hidden">
                                 Cancelar
                             </button>
@@ -204,23 +212,21 @@
 
 
 
-<script>
-  if (!localStorage.getItem("token")) {
-    window.location.href = "/login.html";
-  }
+    <script>
+        if (!localStorage.getItem("token")) {
+            window.location.href = "/login.html";
+        }
 
-  function logout() {
-  localStorage.removeItem("token");
-  location.href = "/login.html";
-}
+        function logout() {
+            localStorage.removeItem("token");
+            location.href = "/login.html";
+        }
 
-</script>
+    </script>
 
 
-<script src="script.js"></script>
-<script src="user_categories.js"></script>
+    <script src="script.js"></script>
+    <script src="user_categories.js"></script>
 
 
 </body>
-
-
