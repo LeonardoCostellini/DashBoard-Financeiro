@@ -80,6 +80,11 @@ const categorias = {
 };
 
 async function atualizarCategorias() {
+  categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
+
+  // ======================
+  // CATEGORIAS PADRÃO
+  // ======================
   const res = await fetch("/api/categories/list", {
     headers: {
       Authorization: "Bearer " + token
@@ -87,15 +92,13 @@ async function atualizarCategorias() {
   });
 
   if (!res.ok) {
-    console.error("Erro ao carregar categorias");
+    console.error("Erro ao carregar categorias padrão");
     return;
   }
 
-  const categorias = await res.json();
+  const categoriasPadrao = await res.json();
 
-  categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
-
-  categorias
+  categoriasPadrao
     .filter(cat => cat.tipo === tipoSelect.value)
     .forEach(cat => {
       const opt = document.createElement("option");
@@ -103,6 +106,21 @@ async function atualizarCategorias() {
       opt.textContent = cat.nome;
       categoriaSelect.appendChild(opt);
     });
+
+  // ======================
+  // CATEGORIAS DO USUÁRIO
+  // ======================
+  if (typeof getUserCategories === "function") {
+    const categoriasUser = await getUserCategories(tipoSelect.value);
+
+    categoriasUser.forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat.nome;
+      opt.textContent = `${cat.nome} (minha)`;
+      opt.dataset.user = "true";
+      categoriaSelect.appendChild(opt);
+    });
+  }
 }
 
 
