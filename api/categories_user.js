@@ -1,44 +1,66 @@
-import { sql } from "@vercel/postgres";
-import jwt from "jsonwebtoken";
-
-function getUserId(req) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) throw new Error("Sem token");
-  return jwt.verify(token, process.env.JWT_SECRET).userId;
-}
+import db from "./db.js";
+import { verifyToken } from "./utils/auth.js";
 
 export default async function handler(req, res) {
   try {
-    const userId = getUserId(req);
+    const user = verifyToken(req);
 
-    // 🔍 LISTAR (padrão + usuário)
+    // =======================
+    // LISTAR
+    // =======================
     if (req.method === "GET") {
-      const { rows } = await sql`
-        SELECT nome, tipo FROM categories
-        UNION ALL
-        SELECT nome, tipo FROM user_categories
-        WHERE user_id = ${userId}
+      const { tipo } = req.query;
+
+      const result = await db.query(
+        `
+        SELECT id, nome, tipo
+        FROM user_categories
+        WHERE user_id = $1 AND tipo = $2
         ORDER BY nome
-      `;
-      return res.status(200).json(rows);
+        `,
+        [user.id, tipo]
+      );
+
+      return res.status(200).json(result.rows);
     }
 
-    // ➕ CRIAR CATEGORIA DO USUÁRIO
+    // =======================
+    // CRIAR
+    // =======================
     if (req.method === "POST") {
       const { nome, tipo } = req.body;
-      if (!nome || !tipo)
-        return res.status(400).json({ error: "Dados inválidos" });
 
-      await sql`
+      if (!nome || !tipo) {
+        return res.status(400).json({ error: "Dados inválidos" });
+      }
+
+      const exists = await db.query(
+        `
+        SELECT 1
+        FROM user_categories
+        WHERE user_id = $1 AND nome = $2 AND tipo = $3
+        `,
+        [user.id, nome, tipo]
+      );
+
+      if (exists.rowCount > 0) {
+        return res.status(400).json({ error: "Categoria já existe" });
+      }
+
+      await db.query(
+        `
         INSERT INTO user_categories (user_id, nome, tipo)
-        VALUES (${userId}, ${nome}, ${tipo})
-      `;
+        VALUES ($1, $2, $3)
+        `,
+        [user.id, nome, tipo]
+      );
 
       return res.status(201).json({ success: true });
     }
 
-    res.status(405).end();
+    return res.status(405).json({ error: "Método não permitido" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    return res.status(401).json({ error: "Não autorizado" });
   }
 }
