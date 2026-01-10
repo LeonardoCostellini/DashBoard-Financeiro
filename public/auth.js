@@ -7,8 +7,8 @@ async function register() {
     return;
   }
 
-  const email = emailInput.value;
-  const password = senhaInput.value;
+  const email = emailInput.value.trim();
+  const password = senhaInput.value.trim();
 
   if (!email || !password) {
     alert("Preencha email e senha");
@@ -16,7 +16,7 @@ async function register() {
   }
 
   try {
-    const res = await fetch("/api/auth/register", {
+    const res = await fetch("/api/auth?action=register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -49,28 +49,33 @@ async function login() {
     return;
   }
 
-  const email = emailInput.value;
-  const password = senhaInput.value;
+  const email = emailInput.value.trim();
+  const password = senhaInput.value.trim();
 
   if (!email || !password) {
     alert("Preencha email e senha");
     return;
   }
 
-  const res = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
-  });
+  try {
+    const res = await fetch("/api/auth?action=login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!res.ok) {
-    alert(data.error || "Login inválido");
-    return;
+    if (!res.ok) {
+      alert(data.error || "Login inválido");
+      return;
+    }
+
+    localStorage.setItem("token", data.token);
+    window.location.href = "/index.html";
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro de conexão");
   }
-
-  localStorage.setItem("token", data.token);
-  window.location.href = "/";
 }
-
