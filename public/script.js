@@ -642,7 +642,7 @@ function resetarFormCategoria() {
 // Carregar categorias do usuário
 async function carregarCategoriasUsuario() {
   try {
-    const res = await fetch("/api/user_categories/categorie_user", {
+    const res = await fetch("/api/user_categories", {
       headers: {
         Authorization: "Bearer " + token
       }
@@ -729,7 +729,7 @@ formCategoria.addEventListener("submit", async (e) => {
       ? JSON.stringify({ id: parseInt(id), nome, tipo })
       : JSON.stringify({ nome, tipo });
 
-    const res = await fetch("/api/user_categories/categorie_user", {
+    const res = await fetch("/api/user_categories", {
       method,
       headers: {
         "Content-Type": "application/json",
@@ -782,7 +782,7 @@ window.excluirCategoria = async function(id) {
   }
 
   try {
-    const res = await fetch(`/api/user_categories/categorie_user?id=${id}`, {
+    const res = await fetch(`/api/user_categories?id=${id}`, {
       method: "DELETE",
       headers: {
         Authorization: "Bearer " + token
