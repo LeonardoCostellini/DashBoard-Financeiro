@@ -60,11 +60,12 @@ export default async function handler(req, res) {
 
       await pool.query(
         `
-        INSERT INTO user_categories (user_id, nome, tipo)
-        VALUES ($1, $2, $3)
-        `,
-        [userId, nome, tipo]
+  INSERT INTO user_categories (user_id, nome, tipo, "user", created_at)
+  VALUES ($1, $2, $3, $4, NOW())
+  `,
+        [userId, nome, tipo, decoded.email] // ou outro valor
       );
+
 
       return res.status(201).json({ success: true });
     }
