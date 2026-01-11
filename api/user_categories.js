@@ -46,38 +46,32 @@ export default async function handler(req, res) {
     // ======================
     // POST
     // ======================
-    
-if (req.method === "POST") {
-  const body = typeof req.body === "string"
-    ? JSON.parse(req.body)
-    : req.body;
+    if (req.method === "POST") {
+      const body = typeof req.body === "string"
+        ? JSON.parse(req.body)
+        : req.body;
 
-  const { nome, tipo } = body;
+      const { nome, tipo } = body;
 
-  if (!nome || !tipo) {
-    return res.status(400).json({ error: "Nome e tipo são obrigatórios" });
-  }
 
-  try {
-    await pool.query(
-      `
-      INSERT INTO user_categories (user_id, nome, tipo)
-      VALUES ($1, $2, $3)
-      `,
-      [userId, nome, tipo]
-    );
+      if (!nome || !tipo) {
+        return res.status(400).json({ error: "Nome e tipo são obrigatórios" });
+      }
 
-    return res.status(201).json({ success: true });
+      await pool.query(
+        `
+        INSERT INTO user_categories (user_id, nome, tipo)
+        VALUES ($1, $2, $3)
+        `,
+        [userId, nome, tipo]
+      );
 
-  } catch (dbErr) {
-    // Categoria duplicada (unique constraint)
-    if (dbErr.code === "23505") {
-      return res.status(409).json({
-        error: "Você já possui uma categoria com esse nome e tipo"
-      });
+      return res.status(201).json({ success: true });
     }
 
-    console.error("ERRO POST USER_CATEGORIES:", dbErr);
+    return res.status(405).end();
+  } catch (err) {
+    console.error("ERRO USER_CATEGORIES:", err);
     return res.status(500).json({ error: "Erro interno do servidor" });
   }
 }
