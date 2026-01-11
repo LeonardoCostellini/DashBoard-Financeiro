@@ -301,7 +301,7 @@ filtroMes.addEventListener('change', () => {
   renderizarTransacoes();
   atualizarResumo();
   atualizarGrafico(); // ⬅️ ESSENCIAL
-}); 
+});
 
 function atualizarGrafico() {
   const canvas = document.getElementById("graficoCombinado");
@@ -432,14 +432,14 @@ lucide.createIcons();
 
 function renderizarMeta(meta) {
 
-const atual = Number(meta.valor_atual);
-const total = Number(meta.valor_total);
+  const atual = Number(meta.valor_atual);
+  const total = Number(meta.valor_total);
 
-const perc = total > 0
-  ? Math.min((atual / total) * 100, 100)
-  : 0;
+  const perc = total > 0
+    ? Math.min((atual / total) * 100, 100)
+    : 0;
 
-const concluida = atual >= total && total > 0;
+  const concluida = atual >= total && total > 0;
 
 
   let cor = "#f97316"; // laranja
@@ -471,15 +471,14 @@ const concluida = atual >= total && total > 0;
         ${statusTexto}
       </p>
 
-      ${
-        concluida
-          ? `
+      ${concluida
+      ? `
             <button onclick="finalizarMeta(${meta.id})"
               class="mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded">
               Finalizar Meta
             </button>
           `
-          : `
+      : `
             <div class="mt-3 flex gap-2">
               <input
                 type="text"
@@ -493,7 +492,7 @@ const concluida = atual >= total && total > 0;
               </button>
             </div>
           `
-      }
+    }
     </div>
   `;
 }
@@ -607,9 +606,13 @@ submenuCategorias.addEventListener("click", (e) => {
 btnAbrirCategorias.addEventListener("click", () => {
   submenuCategorias.classList.add("hidden");
   modalCategorias.classList.remove("hidden");
-  carregarCategoriasUsuario();
+
+  const tipoAtual = tipoSelect.value || "entrada"; // fallback
+  carregarCategoriasUsuario(tipoAtual);
+
   lucide.createIcons();
 });
+
 
 // Fechar modal
 btnFecharModal.addEventListener("click", () => {
@@ -640,9 +643,11 @@ function resetarFormCategoria() {
 }
 
 // Carregar categorias do usuário
-async function carregarCategoriasUsuario() {
+async function carregarCategoriasUsuario(tipo) {
+  if (!tipo) return; // 🔒 proteção
+
   try {
-    const res = await fetch("/api/user_categories", {
+    const res = await fetch(`/api/user_categories?tipo=${tipo}`, {
       headers: {
         Authorization: "Bearer " + token
       }
@@ -669,8 +674,8 @@ async function carregarCategoriasUsuario() {
     categorias.forEach(cat => {
       const div = document.createElement("div");
       div.className = "flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all";
-      
-      const tipoBadge = cat.tipo === "entrada" 
+
+      const tipoBadge = cat.tipo === "entrada"
         ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Entrada</span>'
         : '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">Saída</span>';
 
@@ -709,6 +714,7 @@ async function carregarCategoriasUsuario() {
   }
 }
 
+
 // Criar ou atualizar categoria
 formCategoria.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -725,7 +731,7 @@ formCategoria.addEventListener("submit", async (e) => {
   try {
     const isEdicao = id !== "";
     const method = isEdicao ? "PUT" : "POST";
-    const body = isEdicao 
+    const body = isEdicao
       ? JSON.stringify({ id: parseInt(id), nome, tipo })
       : JSON.stringify({ nome, tipo });
 
@@ -744,8 +750,9 @@ formCategoria.addEventListener("submit", async (e) => {
     }
 
     // Atualizar lista de categorias no modal
-    await carregarCategoriasUsuario();
-    
+    await carregarCategoriasUsuario(tipo);
+
+
     // Atualizar dropdown de categorias no formulário principal
     await atualizarCategorias();
 
@@ -762,21 +769,21 @@ formCategoria.addEventListener("submit", async (e) => {
 });
 
 // Editar categoria
-window.editarCategoria = function(id, nome, tipo) {
+window.editarCategoria = function (id, nome, tipo) {
   categoriaEditId.value = id;
   inputNomeCategoria.value = nome;
   inputTipoCategoria.value = tipo;
-  
+
   btnCancelarEdicao.classList.remove("hidden");
   btnTextoSalvar.textContent = "Salvar Alterações";
   tituloFormCategoria.textContent = "Editar Categoria";
-  
+
   // Scroll suave para o formulário
   formCategoria.scrollIntoView({ behavior: "smooth", block: "nearest" });
 };
 
 // Excluir categoria
-window.excluirCategoria = async function(id) {
+window.excluirCategoria = async function (id) {
   if (!confirm("Tem certeza que deseja excluir esta categoria?\n\nAtenção: Transações com esta categoria não serão excluídas.")) {
     return;
   }
@@ -795,8 +802,11 @@ window.excluirCategoria = async function(id) {
     }
 
     // Atualizar lista de categorias no modal
-    await carregarCategoriasUsuario();
-    
+    const tipoAtual = tipoSelect.value || "entrada";
+    await carregarCategoriasUsuario(tipoAtual);
+
+
+
     // Atualizar dropdown de categorias no formulário principal
     await atualizarCategorias();
 
