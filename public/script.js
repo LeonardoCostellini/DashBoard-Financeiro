@@ -80,11 +80,6 @@ const categorias = {
 };
 
 async function atualizarCategorias() {
-  categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
-
-  // ======================
-  // CATEGORIAS PADRÃO
-  // ======================
   const res = await fetch("/api/categories/list", {
     headers: {
       Authorization: "Bearer " + token
@@ -92,13 +87,15 @@ async function atualizarCategorias() {
   });
 
   if (!res.ok) {
-    console.error("Erro ao carregar categorias padrão");
+    console.error("Erro ao carregar categorias");
     return;
   }
 
-  const categoriasPadrao = await res.json();
+  const categorias = await res.json();
 
-  categoriasPadrao
+  categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
+
+  categorias
     .filter(cat => cat.tipo === tipoSelect.value)
     .forEach(cat => {
       const opt = document.createElement("option");
@@ -106,21 +103,6 @@ async function atualizarCategorias() {
       opt.textContent = cat.nome;
       categoriaSelect.appendChild(opt);
     });
-
-  // ======================
-  // CATEGORIAS DO USUÁRIO
-  // ======================
-  if (typeof getUserCategories === "function") {
-    const categoriasUser = await getUserCategories(tipoSelect.value);
-
-    categoriasUser.forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat.nome;
-      opt.textContent = `${cat.nome} (minha)`;
-      opt.dataset.user = "true";
-      categoriaSelect.appendChild(opt);
-    });
-  }
 }
 
 
@@ -586,3 +568,242 @@ document.addEventListener("DOMContentLoaded", () => {
   lucide.createIcons();
 });
 
+
+
+// =======================
+// GERENCIAMENTO DE CATEGORIAS PERSONALIZADAS
+// =======================
+
+const modalCategorias = document.getElementById("modalCategorias");
+const btnMenuCategorias = document.getElementById("btnMenuCategorias");
+const submenuCategorias = document.getElementById("submenuCategorias");
+const btnAbrirCategorias = document.getElementById("btnAbrirCategorias");
+const btnFecharModal = document.getElementById("btnFecharModal");
+const formCategoria = document.getElementById("formCategoria");
+const inputNomeCategoria = document.getElementById("inputNomeCategoria");
+const inputTipoCategoria = document.getElementById("inputTipoCategoria");
+const categoriaEditId = document.getElementById("categoriaEditId");
+const btnCancelarEdicao = document.getElementById("btnCancelarEdicao");
+const btnTextoSalvar = document.getElementById("btnTextoSalvar");
+const tituloFormCategoria = document.getElementById("tituloFormCategoria");
+const listaCategoriasUsuario = document.getElementById("listaCategoriasUsuario");
+
+// Toggle do submenu
+btnMenuCategorias.addEventListener("click", (e) => {
+  e.stopPropagation();
+  submenuCategorias.classList.toggle("hidden");
+});
+
+// Fechar submenu ao clicar fora
+document.addEventListener("click", () => {
+  submenuCategorias.classList.add("hidden");
+});
+
+submenuCategorias.addEventListener("click", (e) => {
+  e.stopPropagation();
+});
+
+// Abrir modal de categorias
+btnAbrirCategorias.addEventListener("click", () => {
+  submenuCategorias.classList.add("hidden");
+  modalCategorias.classList.remove("hidden");
+  carregarCategoriasUsuario();
+  lucide.createIcons();
+});
+
+// Fechar modal
+btnFecharModal.addEventListener("click", () => {
+  modalCategorias.classList.add("hidden");
+  resetarFormCategoria();
+});
+
+// Fechar modal ao clicar fora
+modalCategorias.addEventListener("click", (e) => {
+  if (e.target === modalCategorias) {
+    modalCategorias.classList.add("hidden");
+    resetarFormCategoria();
+  }
+});
+
+// Cancelar edição
+btnCancelarEdicao.addEventListener("click", () => {
+  resetarFormCategoria();
+});
+
+// Resetar formulário
+function resetarFormCategoria() {
+  formCategoria.reset();
+  categoriaEditId.value = "";
+  btnCancelarEdicao.classList.add("hidden");
+  btnTextoSalvar.textContent = "Criar Categoria";
+  tituloFormCategoria.textContent = "Nova Categoria";
+}
+
+// Carregar categorias do usuário
+async function carregarCategoriasUsuario() {
+  try {
+    const res = await fetch("/api/user_categories/categorie_user", {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("Erro ao carregar categorias");
+    }
+
+    const categorias = await res.json();
+    listaCategoriasUsuario.innerHTML = "";
+
+    if (categorias.length === 0) {
+      listaCategoriasUsuario.innerHTML = `
+        <div class="text-center text-gray-500 py-8">
+          <i data-lucide="folder-open" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+          <p>Você ainda não criou nenhuma categoria personalizada.</p>
+        </div>
+      `;
+      lucide.createIcons();
+      return;
+    }
+
+    categorias.forEach(cat => {
+      const div = document.createElement("div");
+      div.className = "flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all";
+      
+      const tipoBadge = cat.tipo === "entrada" 
+        ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Entrada</span>'
+        : '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">Saída</span>';
+
+      div.innerHTML = `
+        <div class="flex items-center gap-3">
+          <i data-lucide="tag" class="w-5 h-5 text-gray-600"></i>
+          <div>
+            <p class="font-semibold text-gray-800">${cat.nome}</p>
+            ${tipoBadge}
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button 
+            onclick="editarCategoria(${cat.id}, '${cat.nome.replace(/'/g, "\\'")}', '${cat.tipo}')"
+            class="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded transition-all"
+            title="Editar">
+            <i data-lucide="edit-2" class="w-4 h-4"></i>
+          </button>
+          <button 
+            onclick="excluirCategoria(${cat.id})"
+            class="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition-all"
+            title="Excluir">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `;
+
+      listaCategoriasUsuario.appendChild(div);
+    });
+
+    lucide.createIcons();
+
+  } catch (err) {
+    console.error("Erro ao carregar categorias:", err);
+    alert("Erro ao carregar suas categorias. Por favor, tente novamente.");
+  }
+}
+
+// Criar ou atualizar categoria
+formCategoria.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const nome = inputNomeCategoria.value.trim();
+  const tipo = inputTipoCategoria.value;
+  const id = categoriaEditId.value;
+
+  if (!nome || !tipo) {
+    alert("Preencha todos os campos!");
+    return;
+  }
+
+  try {
+    const isEdicao = id !== "";
+    const method = isEdicao ? "PUT" : "POST";
+    const body = isEdicao 
+      ? JSON.stringify({ id: parseInt(id), nome, tipo })
+      : JSON.stringify({ nome, tipo });
+
+    const res = await fetch("/api/user_categories/categorie_user", {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token
+      },
+      body
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Erro ao salvar categoria");
+    }
+
+    // Atualizar lista de categorias no modal
+    await carregarCategoriasUsuario();
+    
+    // Atualizar dropdown de categorias no formulário principal
+    await atualizarCategorias();
+
+    // Resetar formulário
+    resetarFormCategoria();
+
+    // Feedback visual
+    alert(isEdicao ? "Categoria atualizada com sucesso!" : "Categoria criada com sucesso!");
+
+  } catch (err) {
+    console.error("Erro ao salvar categoria:", err);
+    alert(err.message || "Erro ao salvar categoria. Tente novamente.");
+  }
+});
+
+// Editar categoria
+window.editarCategoria = function(id, nome, tipo) {
+  categoriaEditId.value = id;
+  inputNomeCategoria.value = nome;
+  inputTipoCategoria.value = tipo;
+  
+  btnCancelarEdicao.classList.remove("hidden");
+  btnTextoSalvar.textContent = "Salvar Alterações";
+  tituloFormCategoria.textContent = "Editar Categoria";
+  
+  // Scroll suave para o formulário
+  formCategoria.scrollIntoView({ behavior: "smooth", block: "nearest" });
+};
+
+// Excluir categoria
+window.excluirCategoria = async function(id) {
+  if (!confirm("Tem certeza que deseja excluir esta categoria?\n\nAtenção: Transações com esta categoria não serão excluídas.")) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/user_categories/categorie_user?id=${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Erro ao excluir categoria");
+    }
+
+    // Atualizar lista de categorias no modal
+    await carregarCategoriasUsuario();
+    
+    // Atualizar dropdown de categorias no formulário principal
+    await atualizarCategorias();
+
+    alert("Categoria excluída com sucesso!");
+
+  } catch (err) {
+    console.error("Erro ao excluir categoria:", err);
+    alert(err.message || "Erro ao excluir categoria. Tente novamente.");
+  }
+};
