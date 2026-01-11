@@ -18,13 +18,7 @@ export default async function handler(req, res) {
 
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // 🔥 CORREÇÃO AQUI
-    const userId = Number(decoded.id);
-
-    if (!userId) {
-      return res.status(401).json({ error: "Usuário inválido" });
-    }
+    const userId = decoded.id;
 
     // ======================
     // GET
@@ -53,10 +47,12 @@ export default async function handler(req, res) {
     // POST
     // ======================
     if (req.method === "POST") {
-      const body =
-        typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      const body = typeof req.body === "string"
+        ? JSON.parse(req.body)
+        : req.body;
 
       const { nome, tipo } = body;
+
 
       if (!nome || !tipo) {
         return res.status(400).json({ error: "Nome e tipo são obrigatórios" });
@@ -76,6 +72,6 @@ export default async function handler(req, res) {
     return res.status(405).end();
   } catch (err) {
     console.error("ERRO USER_CATEGORIES:", err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: "Erro interno do servidor" });
   }
 }
