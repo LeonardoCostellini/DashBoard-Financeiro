@@ -7,6 +7,7 @@
     <title>Controle Financeiro</title>
     <link rel="icon" href="img/controle-financeiro_36900-2119.avif" type="image/png">
     <link href="./output.css" rel="stylesheet">
+    <link href="./custom.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -149,9 +150,8 @@
     </div>
 
     <!-- Modal de Gerenciamento de Categorias -->
-    <div id="modalCategorias"
-        class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div id="modalCategorias">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" onclick="event.stopPropagation()">
             <!-- Header -->
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex justify-between items-center">
                 <h2 class="text-2xl font-bold flex items-center gap-3">

@@ -1,0 +1,31 @@
+/* Modal de Categorias - Sobrepor tudo */
+#modalCategorias {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+#modalCategorias.show {
+    display: flex !important;
+}
+
+/* Submenu de Categorias */
+#submenuCategorias {
+    position: absolute;
+    top: 70px;
+    left: 24px;
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    width: 14rem;
+    z-index: 40;
+}

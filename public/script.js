@@ -605,7 +605,7 @@ submenuCategorias.addEventListener("click", (e) => {
 // Abrir modal de categorias
 btnAbrirCategorias.addEventListener("click", () => {
   submenuCategorias.classList.add("hidden");
-  modalCategorias.classList.remove("hidden");
+  modalCategorias.classList.add("show"); // Adiciona classe show
 
   const tipoAtual = tipoSelect.value || "entrada"; // fallback
   carregarCategoriasUsuario(tipoAtual);
@@ -616,14 +616,14 @@ btnAbrirCategorias.addEventListener("click", () => {
 
 // Fechar modal
 btnFecharModal.addEventListener("click", () => {
-  modalCategorias.classList.add("hidden");
+  modalCategorias.classList.remove("show"); // Remove classe show
   resetarFormCategoria();
 });
 
 // Fechar modal ao clicar fora
 modalCategorias.addEventListener("click", (e) => {
   if (e.target === modalCategorias) {
-    modalCategorias.classList.add("hidden");
+    modalCategorias.classList.remove("show"); // Remove classe show
     resetarFormCategoria();
   }
 });
