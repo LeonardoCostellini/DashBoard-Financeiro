@@ -1,6 +1,5 @@
 console.log('Chart.js carregado?', typeof Chart !== 'undefined');
 
-
 // =======================
 // AUTH
 // =======================
@@ -20,7 +19,8 @@ const tipoSelect = document.getElementById('tipo');
 const filtroMes = document.getElementById('filtro-mes');
 
 let transacoes = [];
-let chartCombinado = null;
+let chartPrincipal = null;
+let tipoGraficoAtual = 'bar'; // Tipo de gráfico padrão
 
 // =======================
 // UTILS
@@ -37,48 +37,9 @@ function formatarBrasileiro(v) {
   });
 }
 
-
 // =======================
 // CATEGORIAS
 // =======================
-const categorias = {
-  entrada: [
-    'Salário',
-    'Bonificação',
-    'Vale Alimentação',
-    'Dinheiro Emprestado',
-    '13°'
-  ],
-  saida: [
-    'MORADIA (ALUGUEL/FINANCIAMENTO)',
-    'CONDOMÍNIO',
-    'SUPERMERCADO (VALOR MÉDIO)',
-    'LUZ (INCLUSO NO CONDOMÍNIO?)',
-    'GÁS (INCLUSO NO CONDOMÍNIO?)',
-    'IPTU (INCLUSO NO CONDOMÍNIO?)',
-    'PLANO DE SAÚDE',
-    'SEGURO DE VIDA',
-    'INVESTIMENTOS',
-    'FALCULDADE',
-    'RESERVA DE EMERGENCIA',
-    'CARTÃO DE CRÉDITO',
-    'COMBUSTÍVEL',
-    'UNIMED',
-    'GASTOS COM ANIMAIS',
-    'GASTOS IMPREVISTOS',
-    'GASTOS COM TRANSPORTE',
-    'GASTOS COM VEÍCULO',
-    'INTERNET RESIDENCIAL',
-    'ASSINATURAS(EX:NETFLIX)',
-    'PADARIA/FEIRA',
-    'SAÍDAS/CINEMA/LAZER',
-    'CABELEIRO',
-    'TARIFAS BANCÁRIAS',
-    'TELEFONIA/CELULAR'
-  ]
-
-};
-
 async function atualizarCategorias() {
   const res = await fetch("/api/categories/list", {
     headers: {
@@ -105,7 +66,6 @@ async function atualizarCategorias() {
     });
 }
 
-
 async function carregarTransacoes() {
   const res = await fetch("/api/transactions/list", {
     headers: { Authorization: "Bearer " + token }
@@ -117,9 +77,8 @@ async function carregarTransacoes() {
   transacoes = data;
   renderizarTransacoes();
   atualizarResumo();
-  atualizarGrafico(); // ⬅️ aqui
+  atualizarGrafico();
 }
-
 
 // =======================
 // CRIAR TRANSAÇÃO
@@ -137,7 +96,7 @@ form.addEventListener('submit', async e => {
 
   let data = form.data.value;
 
-  // 🔧 Converte YYYY-MM → YYYY-MM-01
+  // Converte YYYY-MM → YYYY-MM-01
   if (data.length === 7) {
     data = data + "-01";
   }
@@ -159,7 +118,6 @@ form.addEventListener('submit', async e => {
   });
 
   const response = await res.json();
-  console.log("API:", response);
 
   if (!res.ok) {
     alert(response.error || "Erro ao salvar");
@@ -169,7 +127,6 @@ form.addEventListener('submit', async e => {
   form.reset();
   carregarTransacoes();
 });
-
 
 // =======================
 // RENDER
@@ -182,13 +139,13 @@ function renderizarTransacoes() {
     if (!mes || t.data.startsWith(mes)) {
 
       const corValor =
-        t.tipo === "entrada" ? "text-green-500" : "text-red-500";
+        t.tipo === "entrada" ? "text-green-600" : "text-red-600";
 
       const tr = document.createElement('tr');
       tr.className = "border-b hover:bg-gray-50";
 
       tr.innerHTML = `
-        <td class="py-3 font-semibold ${corValor}">
+        <td class="py-3 font-bold ${corValor}">
           ${formatarBrasileiro(Number(t.valor))}
         </td>
 
@@ -206,8 +163,7 @@ function renderizarTransacoes() {
 
         <td class="py-3 text-right">
           <button
-            class="border border-red-500 text-red-500 px-3 py-1 rounded
-                   hover:bg-red-500 hover:text-white transition"
+            class="bg-red-50 text-red-600 px-3 py-1 rounded-lg hover:bg-red-600 hover:text-white transition-all"
             data-id="${t.id}">
             Excluir
           </button>
@@ -222,11 +178,9 @@ function renderizarTransacoes() {
   });
 }
 
-
 // =======================
 // EXCLUIR
 // =======================
-
 async function excluirTransacao(id) {
   if (!confirm("Excluir transação?")) return;
 
@@ -251,8 +205,6 @@ async function excluirTransacao(id) {
   }
 
   carregarTransacoes();
-  atualizarGrafico();
-
 }
 
 // =======================
@@ -278,42 +230,20 @@ function atualizarResumo() {
   saldo.textContent = formatarBrasileiro(ent - sai);
 }
 
-
 // =======================
-// INIT
+// GRÁFICOS - MÚLTIPLOS TIPOS
 // =======================
-document.addEventListener("DOMContentLoaded", () => {
-  const hoje = new Date();
-  const mesAtual = hoje.toISOString().slice(0, 7); // YYYY-MM
-
-  filtroMes.value = mesAtual;
-
-  atualizarCategorias();
-  carregarTransacoes();
-
-  lucide.createIcons();
-});
-
-
-
-tipoSelect.addEventListener('change', atualizarCategorias);
-filtroMes.addEventListener('change', () => {
-  renderizarTransacoes();
-  atualizarResumo();
-  atualizarGrafico(); // ⬅️ ESSENCIAL
-});
-
 function atualizarGrafico() {
-  const canvas = document.getElementById("graficoCombinado");
+  const canvas = document.getElementById("graficoPrincipal");
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
-  const mes = filtroMes.value; // ⬅️ ESSENCIAL
+  const mes = filtroMes.value;
 
   const categorias = {};
 
   transacoes.forEach(t => {
-    if (mes && !t.data.startsWith(mes)) return; // ⬅️ FILTRO REAL
+    if (mes && !t.data.startsWith(mes)) return;
 
     if (!categorias[t.categoria]) {
       categorias[t.categoria] = { entrada: 0, saida: 0 };
@@ -326,88 +256,218 @@ function atualizarGrafico() {
     }
   });
 
-
   const labels = Object.keys(categorias);
   const entradas = labels.map(cat => categorias[cat].entrada);
   const saidas = labels.map(cat => categorias[cat].saida);
 
-  if (chartCombinado) {
-    chartCombinado.destroy();
+  if (chartPrincipal) {
+    chartPrincipal.destroy();
   }
 
-  chartCombinado = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Entradas",
-          data: entradas,
-          backgroundColor: "rgba(34,197,94,0.7)"
-        },
-        {
-          label: "Saídas",
-          data: saidas,
-          backgroundColor: "rgba(239,68,68,0.7)"
-        }
-      ]
-    },
+  // Configuração baseada no tipo de gráfico
+  let chartConfig = {
+    type: tipoGraficoAtual,
+    data: {},
     options: {
       responsive: true,
+      maintainAspectRatio: true,
       plugins: {
         legend: {
-          position: "top"
+          position: "top",
+          labels: {
+            font: {
+              size: 12,
+              weight: 'bold'
+            },
+            padding: 15
+          }
         },
         tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          padding: 12,
+          titleFont: {
+            size: 14,
+            weight: 'bold'
+          },
+          bodyFont: {
+            size: 13
+          },
           callbacks: {
             label: function (ctx) {
-              return ctx.dataset.label + ": " +
-                ctx.raw.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL"
-                });
-            }
-          }
-        }
-      },
-      scales: {
-        y: {
-          ticks: {
-            callback: value =>
-              value.toLocaleString("pt-BR", {
+              const label = ctx.dataset.label || ctx.label || '';
+              const value = ctx.parsed.y !== undefined ? ctx.parsed.y : ctx.parsed;
+              return label + ": " + value.toLocaleString("pt-BR", {
                 style: "currency",
                 currency: "BRL"
-              })
+              });
+            }
           }
         }
       }
     }
-  });
+  };
+
+  // Cores modernas
+  const coresEntrada = [
+    'rgba(34, 197, 94, 0.8)',
+    'rgba(16, 185, 129, 0.8)',
+    'rgba(5, 150, 105, 0.8)'
+  ];
+  
+  const coresSaida = [
+    'rgba(239, 68, 68, 0.8)',
+    'rgba(220, 38, 38, 0.8)',
+    'rgba(185, 28, 28, 0.8)'
+  ];
+
+  const coresMistas = [
+    'rgba(210, 255, 0, 0.8)',
+    'rgba(52, 211, 153, 0.8)',
+    'rgba(96, 165, 250, 0.8)',
+    'rgba(251, 146, 60, 0.8)',
+    'rgba(244, 114, 182, 0.8)',
+    'rgba(167, 139, 250, 0.8)'
+  ];
+
+  switch(tipoGraficoAtual) {
+    case 'bar':
+      chartConfig.data = {
+        labels,
+        datasets: [
+          {
+            label: "Entradas",
+            data: entradas,
+            backgroundColor: coresEntrada[0],
+            borderColor: 'rgba(34, 197, 94, 1)',
+            borderWidth: 2
+          },
+          {
+            label: "Saídas",
+            data: saidas,
+            backgroundColor: coresSaida[0],
+            borderColor: 'rgba(239, 68, 68, 1)',
+            borderWidth: 2
+          }
+        ]
+      };
+      chartConfig.options.scales = {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: value => value.toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL"
+            })
+          }
+        }
+      };
+      break;
+
+    case 'pie':
+    case 'doughnut':
+      // Para pizza/rosca, mostrar todas as categorias com total
+      const totalPorCategoria = labels.map((label, i) => 
+        entradas[i] + saidas[i]
+      );
+      
+      chartConfig.data = {
+        labels,
+        datasets: [{
+          label: "Total por Categoria",
+          data: totalPorCategoria,
+          backgroundColor: coresMistas,
+          borderColor: '#ffffff',
+          borderWidth: 3
+        }]
+      };
+      break;
+
+    case 'line':
+      chartConfig.data = {
+        labels,
+        datasets: [
+          {
+            label: "Entradas",
+            data: entradas,
+            borderColor: 'rgba(34, 197, 94, 1)',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+          },
+          {
+            label: "Saídas",
+            data: saidas,
+            borderColor: 'rgba(239, 68, 68, 1)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+          }
+        ]
+      };
+      chartConfig.options.scales = {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: value => value.toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL"
+            })
+          }
+        }
+      };
+      break;
+  }
+
+  chartPrincipal = new Chart(ctx, chartConfig);
 }
 
-
-
-async function carregarCategorias() {
-  const res = await fetch("/api/categorias", {
-    headers: {
-      Authorization: "Bearer " + token
-    }
-  });
-
-  if (!res.ok) return;
-
-  const data = await res.json();
-  categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
-
-  data
-    .filter(cat => cat.tipo === tipoSelect.value)
-    .forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat.nome;
-      opt.textContent = cat.nome;
-      categoriaSelect.appendChild(opt);
+// =======================
+// SELETOR DE TIPO DE GRÁFICO
+// =======================
+document.addEventListener('DOMContentLoaded', () => {
+  const chartButtons = document.querySelectorAll('.chart-btn');
+  
+  chartButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Remove active de todos
+      chartButtons.forEach(b => b.classList.remove('active'));
+      
+      // Adiciona active no clicado
+      btn.classList.add('active');
+      
+      // Atualiza tipo e redesenha
+      tipoGraficoAtual = btn.dataset.chart;
+      atualizarGrafico();
+      
+      // Atualiza ícones
+      lucide.createIcons();
     });
-}
+  });
+});
+
+// =======================
+// INIT
+// =======================
+document.addEventListener("DOMContentLoaded", () => {
+  const hoje = new Date();
+  const mesAtual = hoje.toISOString().slice(0, 7);
+
+  filtroMes.value = mesAtual;
+
+  atualizarCategorias();
+  carregarTransacoes();
+
+  lucide.createIcons();
+});
+
+tipoSelect.addEventListener('change', atualizarCategorias);
+filtroMes.addEventListener('change', () => {
+  renderizarTransacoes();
+  atualizarResumo();
+  atualizarGrafico();
+});
 
 // =======================
 // METAS (BANCO)
@@ -426,12 +486,11 @@ async function carregarMetas() {
   metas.forEach(meta => {
     container.innerHTML += renderizarMeta(meta);
   });
+  
+  lucide.createIcons();
 }
 
-lucide.createIcons();
-
 function renderizarMeta(meta) {
-
   const atual = Number(meta.valor_atual);
   const total = Number(meta.valor_total);
 
@@ -440,7 +499,6 @@ function renderizarMeta(meta) {
     : 0;
 
   const concluida = atual >= total && total > 0;
-
 
   let cor = "#f97316"; // laranja
   let statusTexto = "Em progresso";
@@ -452,42 +510,46 @@ function renderizarMeta(meta) {
   }
 
   return `
-    <div class="mb-6 p-4 bg-white shadow-md rounded-lg">
-      <h4 class="text-lg font-bold mb-1">${meta.nome}</h4>
+    <div class="p-6 bg-gradient-to-r from-gray-50 to-white rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex justify-between items-start mb-3">
+        <h4 class="text-xl font-bold text-gray-800">${meta.nome}</h4>
+        <span class="text-sm font-medium px-3 py-1 rounded-full ${concluida ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">
+          ${perc.toFixed(1)}%
+        </span>
+      </div>
 
-      <p class="text-sm text-gray-700 mb-2">
+      <p class="text-sm text-gray-600 mb-3">
         ${formatarBrasileiro(meta.valor_atual)} de ${formatarBrasileiro(meta.valor_total)}
       </p>
 
-      <div class="w-full bg-gray-200 rounded-lg h-6 mt-2 overflow-hidden">
+      <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
         <div
-          class="h-full flex items-center justify-center text-white text-sm font-semibold transition-all duration-500"
+          class="h-full transition-all duration-500 rounded-full"
           style="width:${perc}%; background-color:${cor}">
-          ${perc.toFixed(1)}%
         </div>
       </div>
 
-      <p class="mt-2 font-semibold ${concluida ? "text-green-600" : "text-gray-600"}">
+      <p class="mt-3 font-semibold text-sm ${concluida ? "text-green-600" : "text-gray-600"}">
         ${statusTexto}
       </p>
 
       ${concluida
       ? `
             <button onclick="finalizarMeta(${meta.id})"
-              class="mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded">
+              class="mt-3 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all">
               Finalizar Meta
             </button>
           `
       : `
-            <div class="mt-3 flex gap-2">
+            <div class="mt-4 flex gap-2">
               <input
                 type="text"
                 placeholder="Adicionar valor"
                 id="novaMeta-${meta.id}"
-                class="border border-gray-300 rounded px-2 py-1 w-full"
+                class="input-modern flex-1"
               />
               <button onclick="atualizarMeta(${meta.id})"
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded">
+                class="btn-lime px-4 py-2 rounded-lg">
                 Atualizar
               </button>
             </div>
@@ -496,9 +558,6 @@ function renderizarMeta(meta) {
     </div>
   `;
 }
-
-
-
 
 document.getElementById("btnAddMeta").addEventListener("click", async () => {
   const nome = document.getElementById("nomeMeta").value.trim();
@@ -549,8 +608,6 @@ async function atualizarMeta(id) {
   carregarMetas();
 }
 
-
-
 async function finalizarMeta(id) {
   if (!confirm("Deseja finalizar esta meta?")) return;
 
@@ -563,257 +620,6 @@ async function finalizarMeta(id) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  carregarMetas();     // ⬅️ ISSO FAZ PUXAR DO BANCO
+  carregarMetas();
   lucide.createIcons();
 });
-
-
-
-// =======================
-// GERENCIAMENTO DE CATEGORIAS PERSONALIZADAS
-// =======================
-
-const modalCategorias = document.getElementById("modalCategorias");
-const btnMenuCategorias = document.getElementById("btnMenuCategorias");
-const submenuCategorias = document.getElementById("submenuCategorias");
-const btnAbrirCategorias = document.getElementById("btnAbrirCategorias");
-const btnFecharModal = document.getElementById("btnFecharModal");
-const formCategoria = document.getElementById("formCategoria");
-const inputNomeCategoria = document.getElementById("inputNomeCategoria");
-const inputTipoCategoria = document.getElementById("inputTipoCategoria");
-const categoriaEditId = document.getElementById("categoriaEditId");
-const btnCancelarEdicao = document.getElementById("btnCancelarEdicao");
-const btnTextoSalvar = document.getElementById("btnTextoSalvar");
-const tituloFormCategoria = document.getElementById("tituloFormCategoria");
-const listaCategoriasUsuario = document.getElementById("listaCategoriasUsuario");
-
-// Toggle do submenu
-btnMenuCategorias.addEventListener("click", (e) => {
-  e.stopPropagation();
-  submenuCategorias.classList.toggle("hidden");
-});
-
-// Fechar submenu ao clicar fora
-document.addEventListener("click", () => {
-  submenuCategorias.classList.add("hidden");
-});
-
-submenuCategorias.addEventListener("click", (e) => {
-  e.stopPropagation();
-});
-
-// Abrir modal de categorias
-btnAbrirCategorias.addEventListener("click", () => {
-  submenuCategorias.classList.add("hidden");
-  modalCategorias.classList.add("show"); // Adiciona classe show
-
-  const tipoAtual = tipoSelect.value || "entrada"; // fallback
-  carregarCategoriasUsuario(tipoAtual);
-
-  lucide.createIcons();
-});
-
-
-// Fechar modal
-btnFecharModal.addEventListener("click", () => {
-  modalCategorias.classList.remove("show"); // Remove classe show
-  resetarFormCategoria();
-});
-
-// Fechar modal ao clicar fora
-modalCategorias.addEventListener("click", (e) => {
-  if (e.target === modalCategorias) {
-    modalCategorias.classList.remove("show"); // Remove classe show
-    resetarFormCategoria();
-  }
-});
-
-// Cancelar edição
-btnCancelarEdicao.addEventListener("click", () => {
-  resetarFormCategoria();
-});
-
-// Resetar formulário
-function resetarFormCategoria() {
-  formCategoria.reset();
-  categoriaEditId.value = "";
-  btnCancelarEdicao.classList.add("hidden");
-  btnTextoSalvar.textContent = "Criar Categoria";
-  tituloFormCategoria.textContent = "Nova Categoria";
-}
-
-// Carregar categorias do usuário
-async function carregarCategoriasUsuario(tipo) {
-  if (!tipo) return; // 🔒 proteção
-
-  try {
-    const res = await fetch(`/api/user_categories?tipo=${tipo}`, {
-      headers: {
-        Authorization: "Bearer " + token
-      }
-    });
-
-    if (!res.ok) {
-      throw new Error("Erro ao carregar categorias");
-    }
-
-    const categorias = await res.json();
-    listaCategoriasUsuario.innerHTML = "";
-
-    if (categorias.length === 0) {
-      listaCategoriasUsuario.innerHTML = `
-        <div class="text-center text-gray-500 py-8">
-          <i data-lucide="folder-open" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
-          <p>Você ainda não criou nenhuma categoria personalizada.</p>
-        </div>
-      `;
-      lucide.createIcons();
-      return;
-    }
-
-    categorias.forEach(cat => {
-      const div = document.createElement("div");
-      div.className = "flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all";
-
-      const tipoBadge = cat.tipo === "entrada"
-        ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Entrada</span>'
-        : '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">Saída</span>';
-
-      div.innerHTML = `
-        <div class="flex items-center gap-3">
-          <i data-lucide="tag" class="w-5 h-5 text-gray-600"></i>
-          <div>
-            <p class="font-semibold text-gray-800">${cat.nome}</p>
-            ${tipoBadge}
-          </div>
-        </div>
-        <div class="flex gap-2">
-          <button 
-            onclick="editarCategoria(${cat.id}, '${cat.nome.replace(/'/g, "\\'")}', '${cat.tipo}')"
-            class="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded transition-all"
-            title="Editar">
-            <i data-lucide="edit-2" class="w-4 h-4"></i>
-          </button>
-          <button 
-            onclick="excluirCategoria(${cat.id})"
-            class="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition-all"
-            title="Excluir">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-          </button>
-        </div>
-      `;
-
-      listaCategoriasUsuario.appendChild(div);
-    });
-
-    lucide.createIcons();
-
-  } catch (err) {
-    console.error("Erro ao carregar categorias:", err);
-    alert("Erro ao carregar suas categorias. Por favor, tente novamente.");
-  }
-}
-
-
-// Criar ou atualizar categoria
-formCategoria.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const nome = inputNomeCategoria.value.trim();
-  const tipo = inputTipoCategoria.value;
-  const id = categoriaEditId.value;
-
-  if (!nome || !tipo) {
-    alert("Preencha todos os campos!");
-    return;
-  }
-
-  try {
-    const isEdicao = id !== "";
-    const method = isEdicao ? "PUT" : "POST";
-    const body = isEdicao
-      ? JSON.stringify({ id: parseInt(id), nome, tipo })
-      : JSON.stringify({ nome, tipo });
-
-    const res = await fetch("/api/user_categories", {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-      body
-    });
-
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || "Erro ao salvar categoria");
-    }
-
-    // Atualizar lista de categorias no modal
-    await carregarCategoriasUsuario(tipo);
-
-
-    // Atualizar dropdown de categorias no formulário principal
-    await atualizarCategorias();
-
-    // Resetar formulário
-    resetarFormCategoria();
-
-    // Feedback visual
-    alert(isEdicao ? "Categoria atualizada com sucesso!" : "Categoria criada com sucesso!");
-
-  } catch (err) {
-    console.error("Erro ao salvar categoria:", err);
-    alert(err.message || "Erro ao salvar categoria. Tente novamente.");
-  }
-});
-
-// Editar categoria
-window.editarCategoria = function (id, nome, tipo) {
-  categoriaEditId.value = id;
-  inputNomeCategoria.value = nome;
-  inputTipoCategoria.value = tipo;
-
-  btnCancelarEdicao.classList.remove("hidden");
-  btnTextoSalvar.textContent = "Salvar Alterações";
-  tituloFormCategoria.textContent = "Editar Categoria";
-
-  // Scroll suave para o formulário
-  formCategoria.scrollIntoView({ behavior: "smooth", block: "nearest" });
-};
-
-// Excluir categoria
-window.excluirCategoria = async function (id) {
-  if (!confirm("Tem certeza que deseja excluir esta categoria?\n\nAtenção: Transações com esta categoria não serão excluídas.")) {
-    return;
-  }
-
-  try {
-    const res = await fetch(`/api/user_categories?id=${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: "Bearer " + token
-      }
-    });
-
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || "Erro ao excluir categoria");
-    }
-
-    // Atualizar lista de categorias no modal
-    const tipoAtual = tipoSelect.value || "entrada";
-    await carregarCategoriasUsuario(tipoAtual);
-
-
-
-    // Atualizar dropdown de categorias no formulário principal
-    await atualizarCategorias();
-
-    alert("Categoria excluída com sucesso!");
-
-  } catch (err) {
-    console.error("Erro ao excluir categoria:", err);
-    alert(err.message || "Erro ao excluir categoria. Tente novamente.");
-  }
-};
