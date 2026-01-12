@@ -15,124 +15,351 @@
         
         * {
             font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body {
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #f8f9fa 100%);
-            margin: 0;
-            padding: 0;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+            position: relative;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        /* Animação de fundo dinâmica */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(210, 255, 0, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(210, 255, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(0, 255, 255, 0.08) 0%, transparent 50%);
+            animation: gradientShift 20s ease infinite;
+            z-index: 0;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(5%, 5%) rotate(120deg); }
+            66% { transform: translate(-5%, 5%) rotate(240deg); }
+        }
+        
+        /* Partículas flutuantes */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(210, 255, 0, 0.5);
+            border-radius: 50%;
+            animation: float 15s infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+        }
+        
+        .container-main {
+            position: relative;
+            z-index: 10;
         }
         
         .lime-accent {
             color: #D2FF00;
+            text-shadow: 0 0 20px rgba(210, 255, 0, 0.5);
         }
         
-        .lime-bg {
-            background: linear-gradient(135deg, #D2FF00 0%, #B8E600 100%);
-            color: #000000;
+        .lime-glow {
+            box-shadow: 0 0 30px rgba(210, 255, 0, 0.3), 0 0 60px rgba(210, 255, 0, 0.1);
         }
         
-        .lime-border {
-            border-color: #D2FF00;
-        }
-        
-        .card-modern {
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-            transition: all 0.3s ease;
-        }
-        
-        .card-modern:hover {
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-        
-        .stat-card {
-            border-radius: 20px;
+        /* Header ultra moderno */
+        .header-ultra {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(26, 26, 26, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(210, 255, 0, 0.3);
+            border-radius: 30px;
             padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(210, 255, 0, 0.2);
+        }
+        
+        .header-ultra::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(210, 255, 0, 0.1) 50%, transparent 70%);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .logo-3d {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #D2FF00 0%, #00ff88 50%, #00ffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 30px rgba(210, 255, 0, 0.6));
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 20px rgba(210, 255, 0, 0.4)); }
+            to { filter: drop-shadow(0 0 40px rgba(210, 255, 0, 0.8)); }
+        }
+        
+        /* Cards com efeito glassmorphism avançado */
+        .card-glass-pro {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px);
+            border: 2px solid rgba(210, 255, 0, 0.2);
+            border-radius: 30px;
+            padding: 2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }
         
-        .stat-card::before {
+        .card-glass-pro::before {
             content: '';
             position: absolute;
             top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(210, 255, 0, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .card-glass-pro:hover::before {
+            left: 100%;
+        }
+        
+        .card-glass-pro:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: rgba(210, 255, 0, 0.5);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), 0 0 50px rgba(210, 255, 0, 0.3);
+        }
+        
+        /* Stats cards com gradientes vibrantes */
+        .stat-card-pro {
+            position: relative;
+            border-radius: 25px;
+            padding: 2.5rem;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-card-pro::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+            animation: rotate 10s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .stat-card-pro:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .stat-verde {
+            background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+        }
+        
+        .stat-vermelho {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+        }
+        
+        .stat-azul {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+        }
+        
+        .stat-numero {
+            font-size: 2.5rem;
+            font-weight: 900;
+            position: relative;
+            z-index: 10;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Inputs modernos com neon */
+        .input-neon {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(210, 255, 0, 0.3);
+            border-radius: 15px;
+            padding: 1rem 1.25rem;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input-neon:focus {
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            transform: translate(30%, -30%);
-        }
-        
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 800;
-        }
-        
-        .btn-lime {
-            background: linear-gradient(135deg, #D2FF00 0%, #B8E600 100%);
-            color: #000000;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(210, 255, 0, 0.3);
-            border: none;
-            cursor: pointer;
-        }
-        
-        .btn-lime:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(210, 255, 0, 0.4);
-        }
-        
-        .input-modern {
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 0.875rem 1rem;
-            transition: all 0.3s ease;
-            background: white;
-        }
-        
-        .input-modern:focus {
             border-color: #D2FF00;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(210, 255, 0, 0.1);
+            box-shadow: 0 0 30px rgba(210, 255, 0, 0.3), inset 0 0 20px rgba(210, 255, 0, 0.1);
         }
         
-        .chart-selector {
-            display: flex;
-            gap: 0.5rem;
-            background: #f3f4f6;
-            padding: 0.5rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
+        .input-neon::placeholder {
+            color: rgba(255, 255, 255, 0.4);
         }
         
-        .chart-btn {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            color: #6b7280;
-        }
-        
-        .chart-btn.active {
-            background: white;
+        /* Botão super impactante */
+        .btn-neon {
+            background: linear-gradient(135deg, #D2FF00 0%, #B8E600 100%);
             color: #000000;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            font-weight: 700;
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(210, 255, 0, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
-        .header-gradient {
-            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
-            color: white;
+        .btn-neon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
         }
         
+        .btn-neon:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-neon:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(210, 255, 0, 0.6);
+        }
+        
+        .btn-neon:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        /* Seletor de gráficos moderno */
+        .chart-selector-pro {
+            display: flex;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            padding: 1rem;
+            border-radius: 20px;
+            border: 2px solid rgba(210, 255, 0, 0.2);
+            margin-bottom: 2rem;
+        }
+        
+        .chart-btn-pro {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .chart-btn-pro:hover {
+            background: rgba(210, 255, 0, 0.1);
+            color: #D2FF00;
+            border-color: rgba(210, 255, 0, 0.3);
+        }
+        
+        .chart-btn-pro.active {
+            background: linear-gradient(135deg, #D2FF00 0%, #B8E600 100%);
+            color: #000000;
+            border-color: #D2FF00;
+            box-shadow: 0 5px 20px rgba(210, 255, 0, 0.4);
+        }
+        
+        /* Tabela estilizada */
+        .table-neon {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .table-neon thead {
+            background: rgba(210, 255, 0, 0.1);
+        }
+        
+        .table-neon th {
+            color: #D2FF00;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 1rem;
+        }
+        
+        .table-neon tbody tr {
+            border-bottom: 1px solid rgba(210, 255, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .table-neon tbody tr:hover {
+            background: rgba(210, 255, 0, 0.05);
+            transform: translateX(5px);
+        }
+        
+        .table-neon td {
+            padding: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Modal moderno */
         #modalCategorias {
             display: none;
             position: fixed;
@@ -140,225 +367,267 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            animation: fadeIn 0.3s ease;
         }
         
         #modalCategorias.show {
             display: flex;
         }
         
-        .modal-content {
-            max-width: 800px;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content-pro {
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(30px);
+            border: 2px solid rgba(210, 255, 0, 0.3);
+            border-radius: 30px;
+            padding: 2rem;
+            max-width: 900px;
             max-height: 90vh;
             overflow-y: auto;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8), 0 0 60px rgba(210, 255, 0, 0.2);
+            animation: slideUp 0.3s ease;
         }
         
-        table {
-            border-collapse: separate;
-            border-spacing: 0;
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         
-        tbody tr {
-            transition: all 0.2s ease;
+        /* Scrollbar customizada */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
         }
         
-        tbody tr:hover {
-            background: #f9fafb;
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #D2FF00 0%, #B8E600 100%);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #D2FF00;
+        }
+        
+        /* Efeitos de texto */
+        .text-neon {
+            color: white;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .text-subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
         }
     </style>
 </head>
 
 <body class="min-h-screen p-6">
-    <div class="max-w-7xl mx-auto space-y-8">
+    <!-- Partículas flutuantes -->
+    <div class="particles" id="particles"></div>
+    
+    <div class="container-main max-w-7xl mx-auto space-y-8">
 
-        <!-- Header -->
-        <header class="header-gradient rounded-3xl p-6 shadow-lg">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <button id="btnMenuCategorias" class="p-2 hover:bg-white hover:bg-opacity-10 rounded-lg transition-all" title="Gerenciar Categorias">
+        <!-- Header Ultra Moderno -->
+        <header class="header-ultra">
+            <div class="flex justify-between items-center relative z-10">
+                <div class="flex items-center gap-6">
+                    <button id="btnMenuCategorias" class="p-3 hover:bg-white hover:bg-opacity-10 rounded-xl transition-all lime-glow" title="Gerenciar Categorias">
                         <i data-lucide="menu" class="w-8 h-8 lime-accent"></i>
                     </button>
                     <div>
-                        <h1 class="text-4xl font-extrabold flex items-center gap-3">
-                            <i data-lucide="wallet" class="w-8 h-8 lime-accent"></i> 
-                            <span class="lime-accent">Finance</span><span class="text-white">Flow</span>
+                        <h1 class="logo-3d flex items-center gap-3">
+                            <i data-lucide="zap" class="w-12 h-12"></i>
+                            FinanceFlow
                         </h1>
-                        <p class="text-gray-400 text-sm mt-1">Seu controle financeiro inteligente</p>
+                        <p class="text-subtitle mt-2">Controle financeiro de última geração</p>
                     </div>
                 </div>
-                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 transition-all">
-                    <i data-lucide="log-out" class="w-5 h-5"></i> Sair
+                <button onclick="logout()" class="btn-neon flex items-center gap-2">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                    <span>Sair</span>
                 </button>
             </div>
         </header>
 
         <!-- Submenu Categorias -->
-        <div id="submenuCategorias" class="absolute mt-2 bg-white rounded-xl shadow-xl border border-gray-200 w-56 hidden z-40" style="top: 70px; left: 24px;">
-            <button id="btnAbrirCategorias" class="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 text-gray-700 rounded-xl transition-all">
-                <i data-lucide="folder-plus" class="w-5 h-5 text-green-600"></i>
-                Criar Categoria
+        <div id="submenuCategorias" class="absolute mt-2 card-glass-pro w-64 hidden z-40" style="top: 90px; left: 24px;">
+            <button id="btnAbrirCategorias" class="w-full px-4 py-3 text-left hover:bg-white hover:bg-opacity-10 flex items-center gap-3 text-white rounded-xl transition-all">
+                <i data-lucide="folder-plus" class="w-5 h-5 lime-accent"></i>
+                <span class="text-neon">Criar Categoria</span>
             </button>
         </div>
 
         <!-- Formulário de Transação -->
-        <form id="form-transacao" class="card-modern p-8 space-y-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Nova Transação</h2>
+        <form id="form-transacao" class="card-glass-pro space-y-6">
+            <h2 class="text-3xl font-bold lime-accent flex items-center gap-3">
+                <i data-lucide="plus-square" class="w-8 h-8"></i>
+                Nova Transação
+            </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <input type="text" id="valor" inputmode="decimal" pattern="[\d.,]*" name="valor" placeholder="Valor (R$)" class="input-modern">
-                <select id="tipo" class="input-modern">
-                    <option value="entrada">Entrada</option>
-                    <option value="saida">Saída</option>
+                <input type="text" id="valor" inputmode="decimal" pattern="[\d.,]*" name="valor" placeholder="Valor (R$)" class="input-neon">
+                <select id="tipo" class="input-neon">
+                    <option value="entrada">💰 Entrada</option>
+                    <option value="saida">💸 Saída</option>
                 </select>
-                <select id="categoria" class="input-modern"></select>
-                <input type="month" id="data" required class="input-modern">
+                <select id="categoria" class="input-neon"></select>
+                <input type="month" id="data" required class="input-neon">
             </div>
             <div class="text-right">
-                <button type="submit" class="btn-lime px-8 py-3 rounded-xl inline-flex items-center gap-2">
-                    <i data-lucide="plus-circle" class="w-5 h-5"></i> Adicionar
+                <button type="submit" class="btn-neon inline-flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    Adicionar Transação
                 </button>
             </div>
         </form>
 
         <!-- Filtro por mês -->
-        <div class="card-modern p-6">
+        <div class="card-glass-pro">
             <div class="flex items-center gap-4">
-                <i data-lucide="calendar" class="w-6 h-6 text-gray-700"></i>
-                <label for="filtro-mes" class="font-medium text-lg">Filtrar por mês:</label>
-                <input type="month" id="filtro-mes" class="input-modern">
+                <i data-lucide="calendar" class="w-7 h-7 lime-accent"></i>
+                <label for="filtro-mes" class="font-semibold text-lg text-neon">Período:</label>
+                <input type="month" id="filtro-mes" class="input-neon flex-1">
             </div>
         </div>
 
         <!-- Cards de Resumo -->
         <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            <div class="stat-card bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg">
-                <div class="flex items-center justify-between mb-2">
-                    <i data-lucide="trending-up" class="w-10 h-10"></i>
-                    <span class="text-sm font-medium opacity-90">ENTRADAS</span>
+            <div class="stat-card-pro stat-verde text-white shadow-lg">
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-3">
+                        <i data-lucide="trending-up" class="w-12 h-12"></i>
+                        <span class="text-sm font-bold tracking-wider opacity-90">ENTRADAS</span>
+                    </div>
+                    <p class="stat-numero" id="total-entradas">R$ 0,00</p>
+                    <p class="text-sm mt-2 opacity-80">↗ Receitas do período</p>
                 </div>
-                <p class="stat-number" id="total-entradas">R$ 0,00</p>
             </div>
-            <div class="stat-card bg-gradient-to-br from-red-400 to-red-600 text-white shadow-lg">
-                <div class="flex items-center justify-between mb-2">
-                    <i data-lucide="trending-down" class="w-10 h-10"></i>
-                    <span class="text-sm font-medium opacity-90">SAÍDAS</span>
+            <div class="stat-card-pro stat-vermelho text-white shadow-lg">
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-3">
+                        <i data-lucide="trending-down" class="w-12 h-12"></i>
+                        <span class="text-sm font-bold tracking-wider opacity-90">SAÍDAS</span>
+                    </div>
+                    <p class="stat-numero" id="total-saidas">R$ 0,00</p>
+                    <p class="text-sm mt-2 opacity-80">↘ Despesas do período</p>
                 </div>
-                <p class="stat-number" id="total-saidas">R$ 0,00</p>
             </div>
-            <div class="stat-card bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-lg">
-                <div class="flex items-center justify-between mb-2">
-                    <i data-lucide="dollar-sign" class="w-10 h-10"></i>
-                    <span class="text-sm font-medium opacity-90">SALDO</span>
+            <div class="stat-card-pro stat-azul text-white shadow-lg">
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-3">
+                        <i data-lucide="wallet" class="w-12 h-12"></i>
+                        <span class="text-sm font-bold tracking-wider opacity-90">SALDO</span>
+                    </div>
+                    <p class="stat-numero" id="saldo">R$ 0,00</p>
+                    <p class="text-sm mt-2 opacity-80">⚖ Balanço geral</p>
                 </div>
-                <p class="stat-number" id="saldo">R$ 0,00</p>
             </div>
         </section>
 
         <!-- Lista de Transações -->
-        <div class="card-modern p-6">
-            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-                <i data-lucide="list" class="w-6 h-6"></i> Transações
+        <div class="card-glass-pro">
+            <h2 class="text-3xl font-bold mb-6 lime-accent flex items-center gap-3">
+                <i data-lucide="list" class="w-8 h-8"></i>
+                Histórico de Transações
             </h2>
-            <div class="overflow-auto max-h-96">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50 text-gray-600">
+            <div class="overflow-auto max-h-96 table-neon">
+                <table class="min-w-full">
+                    <thead>
                         <tr>
-                            <th class="p-3 text-left font-semibold">Valor</th>
-                            <th class="p-3 text-left font-semibold">Tipo</th>
-                            <th class="p-3 text-left font-semibold">Categoria</th>
-                            <th class="p-3 text-left font-semibold">Data</th>
-                            <th class="p-3 text-left font-semibold">Ação</th>
+                            <th class="p-4 text-left">Valor</th>
+                            <th class="p-4 text-left">Tipo</th>
+                            <th class="p-4 text-left">Categoria</th>
+                            <th class="p-4 text-left">Data</th>
+                            <th class="p-4 text-left">Ação</th>
                         </tr>
                     </thead>
-                    <tbody id="lista-transacoes" class="divide-y divide-gray-100"></tbody>
+                    <tbody id="lista-transacoes"></tbody>
                 </table>
             </div>
         </div>
 
         <!-- Gráficos -->
-        <section class="card-modern p-6">
-            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-                <i data-lucide="bar-chart" class="w-6 h-6"></i> Visualização de Dados
+        <section class="card-glass-pro">
+            <h2 class="text-3xl font-bold mb-6 lime-accent flex items-center gap-3">
+                <i data-lucide="bar-chart-3" class="w-8 h-8"></i>
+                Análise Visual de Dados
             </h2>
             
-            <!-- Seletor de Tipo de Gráfico -->
-            <div class="chart-selector">
-                <button type="button" class="chart-btn active" data-chart="bar">
-                    <i data-lucide="bar-chart" class="w-4 h-4 inline mr-2"></i>Barras
-                </button>
-                <button type="button" class="chart-btn" data-chart="pie">
-                    <i data-lucide="pie-chart" class="w-4 h-4 inline mr-2"></i>Pizza
-                </button>
-                <button type="button" class="chart-btn" data-chart="line">
-                    <i data-lucide="trending-up" class="w-4 h-4 inline mr-2"></i>Linha
-                </button>
-                <button type="button" class="chart-btn" data-chart="doughnut">
-                    <i data-lucide="circle" class="w-4 h-4 inline mr-2"></i>Rosca
-                </button>
-            </div>
-            
-            <canvas id="graficoPrincipal" class="w-full" style="max-height: 400px;"></canvas>
+            <canvas id="graficoCombinado" class="w-full" style="max-height: 450px;"></canvas>
+            <canvas id="grafico"></canvas>
         </section>
 
         <!-- Metas -->
-        <section class="card-modern p-6 space-y-6">
-            <h2 class="text-2xl font-bold flex items-center gap-2">
-                <i data-lucide="target" class="w-6 h-6"></i> Minhas Metas
+        <section class="card-glass-pro space-y-6">
+            <h2 class="text-3xl font-bold lime-accent flex items-center gap-3">
+                <i data-lucide="target" class="w-8 h-8"></i>
+                Minhas Metas Financeiras
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <input type="text" id="nomeMeta" placeholder="Nome da Meta" class="input-modern">
-                <input type="text" id="valorMeta" placeholder="Valor Objetivo (R$)" class="input-modern">
-                <input type="text" id="valorAtualMeta" placeholder="Valor Atual (R$)" class="input-modern">
-                <button id="btnAddMeta" class="btn-lime rounded-xl flex items-center justify-center gap-2">
-                    <i data-lucide="plus" class="w-5 h-5"></i> Criar Meta
+                <input type="text" id="nomeMeta" placeholder="Nome da Meta" class="input-neon">
+                <input type="text" id="valorMeta" placeholder="Valor Objetivo (R$)" class="input-neon">
+                <input type="text" id="valorAtualMeta" placeholder="Valor Atual (R$)" class="input-neon">
+                <button id="btnAddMeta" class="btn-neon flex items-center justify-center gap-2">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                    Criar Meta
                 </button>
             </div>
-            <div id="listaMetas" class="space-y-3"></div>
+            <div id="listaMetas" class="space-y-4"></div>
         </section>
 
     </div>
 
     <!-- Modal de Gerenciamento de Categorias -->
     <div id="modalCategorias">
-        <div class="modal-content card-modern p-8" onclick="event.stopPropagation()">
+        <div class="modal-content-pro" onclick="event.stopPropagation()">
             <!-- Header -->
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold flex items-center gap-3">
-                    <i data-lucide="folder" class="w-7 h-7"></i>
+                <h2 class="text-3xl font-bold lime-accent flex items-center gap-3">
+                    <i data-lucide="folder" class="w-8 h-8"></i>
                     Gerenciar Categorias
                 </h2>
-                <button id="btnFecharModal" class="hover:bg-gray-100 rounded-full p-2 transition-all">
-                    <i data-lucide="x" class="w-6 h-6"></i>
+                <button id="btnFecharModal" class="hover:bg-white hover:bg-opacity-10 rounded-full p-2 transition-all">
+                    <i data-lucide="x" class="w-7 h-7 text-white"></i>
                 </button>
             </div>
 
             <!-- Conteúdo -->
             <div class="space-y-6">
                 <!-- Formulário -->
-                <div class="bg-gray-50 p-6 rounded-xl">
-                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                <div class="card-glass-pro">
+                    <h3 class="text-xl font-semibold mb-4 text-neon flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-6 h-6 lime-accent"></i>
                         <span id="tituloFormCategoria">Nova Categoria</span>
                     </h3>
                     <form id="formCategoria" class="space-y-4">
                         <input type="hidden" id="categoriaEditId">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="text" id="inputNomeCategoria" placeholder="Nome da categoria" required class="input-modern">
-                            <select id="inputTipoCategoria" required class="input-modern">
+                            <input type="text" id="inputNomeCategoria" placeholder="Nome da categoria" required class="input-neon">
+                            <select id="inputTipoCategoria" required class="input-neon">
                                 <option value="">Selecione o tipo</option>
-                                <option value="entrada">Entrada</option>
-                                <option value="saida">Saída</option>
+                                <option value="entrada">💰 Entrada</option>
+                                <option value="saida">💸 Saída</option>
                             </select>
                         </div>
                         <div class="flex gap-3">
-                            <button type="submit" class="btn-lime px-6 py-3 rounded-xl flex items-center gap-2">
+                            <button type="submit" class="btn-neon flex items-center gap-2">
                                 <i data-lucide="save" class="w-5 h-5"></i>
                                 <span id="btnTextoSalvar">Criar Categoria</span>
                             </button>
-                            <button type="button" id="btnCancelarEdicao" class="bg-gray-400 text-white px-6 py-3 rounded-xl hover:bg-gray-500 transition-all hidden">
+                            <button type="button" id="btnCancelarEdicao" class="bg-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-700 transition-all hidden font-semibold">
                                 Cancelar
                             </button>
                         </div>
@@ -367,9 +636,9 @@
 
                 <!-- Lista de Categorias -->
                 <div class="space-y-4">
-                    <h3 class="text-lg font-semibold flex items-center gap-2">
-                        <i data-lucide="list" class="w-5 h-5"></i>
-                        Minhas Categorias Personalizadas
+                    <h3 class="text-xl font-semibold text-neon flex items-center gap-2">
+                        <i data-lucide="list" class="w-6 h-6 lime-accent"></i>
+                        Categorias Personalizadas
                     </h3>
                     <div id="listaCategoriasUsuario" class="space-y-2"></div>
                 </div>
@@ -378,6 +647,17 @@
     </div>
 
     <script>
+        // Criar partículas flutuantes
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 15 + 's';
+            particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            particlesContainer.appendChild(particle);
+        }
+    
         if (!localStorage.getItem("token")) {
             window.location.href = "/login.html";
         }
