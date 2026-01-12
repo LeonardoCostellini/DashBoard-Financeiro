@@ -4,295 +4,208 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Controle Financeiro - Dashboard Moderno</title>
+    <title>Controle Financeiro</title>
     <link rel="icon" href="img/profit_1838239.png" type="image/png">
-    <link href="./modern.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="./output.css" rel="stylesheet">
+    <link href="./custom.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-<body>
-    <div class="dashboard-container">
-        <!-- Header -->
-        <header class="dashboard-header">
-            <div class="header-title">
-                <button id="btnMenuCategorias" class="menu-btn" title="Gerenciar Categorias" data-testid="menu-categories-btn">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
+<body class="bg-gradient-to-br from-blue-100 via-gray-100 to-white text-gray-800 min-h-screen p-6">
+    <div class="max-w-7xl mx-auto space-y-8">
+
+        <!-- Título -->
+        <header class="flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <!-- Menu Hamburguer -->
+                <button id="btnMenuCategorias" class="p-2 hover:bg-blue-100 rounded-lg transition-all"
+                    title="Gerenciar Categorias">
+                    <i data-lucide="menu" class="w-8 h-8 text-blue-700"></i>
                 </button>
-                <div class="logo-icon">
-                    <i data-lucide="wallet" class="w-6 h-6 text-white"></i>
-                </div>
-                <h1>Controle Financeiro</h1>
+                <h1 class="text-5xl font-extrabold text-blue-800 flex items-center gap-3">
+                    <i data-lucide="wallet" class="w-8 h-8 text-blue-700"></i> Controle Financeiro
+                </h1>
             </div>
-            <button onclick="logout()" class="btn btn-danger" data-testid="logout-btn">
-                <i data-lucide="log-out" class="w-5 h-5"></i>
-                <span>Sair</span>
+            <button onclick="logout()"
+                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                <i data-lucide="log-out" class="w-5 h-5"></i> Sair
             </button>
         </header>
 
-        <!-- Submenu Categorias -->
-        <div id="submenuCategorias" class="modal-overlay">
-            <div class="modal-content" style="max-width: 400px;" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <h3 class="modal-title">Menu</h3>
-                    <button class="close-modal" onclick="document.getElementById('submenuCategorias').classList.remove('show')">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
-                </div>
-                <button id="btnAbrirCategorias" class="btn btn-primary" style="width: 100%;" data-testid="open-categories-btn">
-                    <i data-lucide="folder-plus" class="w-5 h-5"></i>
-                    <span>Gerenciar Categorias</span>
-                </button>
-            </div>
+        <div id="submenuCategorias"
+            class="absolute mt-2 bg-white rounded-xl shadow-xl border border-gray-200 w-56 hidden z-40"
+            style="top: 70px; left: 24px;">
+
+            <button id="btnAbrirCategorias"
+                class="w-full px-4 py-3 text-left hover:bg-blue-50 flex items-center gap-3 text-gray-700 rounded-xl">
+                <i data-lucide="folder-plus" class="w-5 h-5 text-blue-600"></i>
+                Criar Categoria
+            </button>
+
         </div>
 
 
+
         <!-- Formulário -->
-        <form id="form-transacao" class="glass-card form-card" data-testid="transaction-form">
-            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                <i data-lucide="plus-circle" class="w-6 h-6 text-purple-400"></i>
-                Nova Transação
-            </h2>
-            <div class="form-grid">
-                <div class="input-group">
-                    <input type="text" id="valor" inputmode="decimal" pattern="[\d.,]*" name="valor"
-                        placeholder="Valor (R$)" class="input-field" data-testid="transaction-value-input">
-                </div>
-                <div class="input-group">
-                    <select id="tipo" class="input-field" data-testid="transaction-type-select">
-                        <option value="entrada">Entrada</option>
-                        <option value="saida">Saída</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <select id="categoria" class="input-field" data-testid="transaction-category-select"></select>
-                </div>
-                <div class="input-group">
-                    <input type="month" id="data" required class="input-field" data-testid="transaction-date-input">
-                </div>
+        <form id="form-transacao" class="bg-white p-8 rounded-2xl shadow-lg space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <input type="text" id="valor" inputmode="decimal" pattern="[\d.,]*" name="valor"
+                    placeholder="Valor (R$)"
+                    class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
+                <select id="tipo"
+                    class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
+                    <option value="entrada">Entrada</option>
+                    <option value="saida">Saída</option>
+                </select>
+                <select id="categoria"
+                    class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none"></select>
+                <input type="month" id="data" required
+                    class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
             </div>
-            <div class="text-center">
-                <button type="submit" class="btn btn-primary" data-testid="add-transaction-btn">
-                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                    <span>Adicionar Transação</span>
+            <div class="text-right">
+                <button type="submit"
+                    class="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 transition-all ease-in-out duration-200">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i> Adicionar
                 </button>
             </div>
         </form>
 
         <!-- Filtro por mês -->
-        <div class="glass-card" style="animation-delay: 0.3s;">
-            <div class="flex items-center gap-4 flex-wrap">
-                <label for="filtro-mes" class="font-medium flex items-center gap-2">
-                    <i data-lucide="calendar" class="w-5 h-5 text-purple-400"></i>
-                    Filtrar por mês:
-                </label>
-                <input type="month" id="filtro-mes" class="input-field" style="max-width: 200px;" data-testid="month-filter-input">
-            </div>
+        <div class="flex items-center gap-4">
+            <label for="filtro-mes" class="font-medium text-lg">
+                <i data-lucide="calendar" class="w-6 h-6 text-blue-700"></i> Filtrar por mês:
+            </label>
+            <input type="month" id="filtro-mes"
+                class="p-3 border border-gray-300 rounded-lg w-auto focus:ring-2 ring-blue-400 focus:outline-none">
         </div>
 
-        <!-- Cards de Resumo -->
-        <section class="stats-grid">
-            <div class="stat-card income" data-testid="income-card">
-                <div class="stat-icon">
-                    <i data-lucide="trending-up" class="w-7 h-7 text-white"></i>
-                </div>
-                <div class="stat-label">Entradas</div>
-                <div class="stat-value" id="total-entradas" data-testid="total-income">R$ 0,00</div>
+        <!-- Resumo com cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div class="bg-green-50 border border-green-200 p-6 rounded-xl shadow-lg flex items-center gap-4">
+                <i data-lucide="arrow-down-circle" class="text-green-600 w-10 h-10"></i>
+                <p class="text-lg font-medium">Entradas:<br><span id="total-entradas"
+                        class="text-green-700 text-2xl font-bold">R$ 0,00</span></p>
             </div>
-            <div class="stat-card expense" data-testid="expense-card">
-                <div class="stat-icon">
-                    <i data-lucide="trending-down" class="w-7 h-7 text-white"></i>
-                </div>
-                <div class="stat-label">Saídas</div>
-                <div class="stat-value" id="total-saidas" data-testid="total-expense">R$ 0,00</div>
+            <div class="bg-red-50 border border-red-200 p-6 rounded-xl shadow-lg flex items-center gap-4">
+                <i data-lucide="arrow-up-circle" class="text-red-600 w-10 h-10"></i>
+                <p class="text-lg font-medium">Saídas:<br><span id="total-saidas"
+                        class="text-red-700 text-2xl font-bold">R$ 0,00</span></p>
             </div>
-            <div class="stat-card balance" data-testid="balance-card">
-                <div class="stat-icon">
-                    <i data-lucide="wallet" class="w-7 h-7 text-white"></i>
-                </div>
-                <div class="stat-label">Saldo</div>
-                <div class="stat-value" id="saldo" data-testid="balance">R$ 0,00</div>
+            <div class="bg-blue-50 border border-blue-200 p-6 rounded-xl shadow-lg flex items-center gap-4">
+                <i data-lucide="dollar-sign" class="text-blue-600 w-10 h-10"></i>
+                <p class="text-lg font-medium">Saldo:<br><span id="saldo" class="text-blue-700 text-2xl font-bold">R$
+                        0,00</span></p>
             </div>
         </section>
 
         <!-- Lista de transações -->
-        <section class="glass-card transactions-section">
-            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                <i data-lucide="list" class="w-6 h-6 text-purple-400"></i>
-                Transações
-            </h2>
-            <div class="table-container">
-                <table class="transactions-table" data-testid="transactions-table">
-                    <thead>
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i data-lucide="list" class="w-6 h-6"></i>
+                Transações</h2>
+            <div class="overflow-auto max-h-80">
+                <table class="min-w-full text-sm divide-y divide-gray-200">
+                    <thead class="bg-gray-50 text-gray-600">
                         <tr>
-                            <th>Valor</th>
-                            <th>Tipo</th>
-                            <th>Categoria</th>
-                            <th>Data</th>
-                            <th>Ações</th>
+                            <th class="p-3 text-left">Valor</th>
+                            <th class="p-3 text-left">Tipo</th>
+                            <th class="p-3 text-left">Categoria</th>
+                            <th class="p-3 text-left">Data</th>
+                            <th class="p-3 text-left">Ação</th>
                         </tr>
                     </thead>
-                    <tbody id="lista-transacoes"></tbody>
+                    <tbody id="lista-transacoes" class="divide-y divide-gray-100"></tbody>
                 </table>
             </div>
-        </section>
+        </div>
 
-        <!-- Gráficos -->
-        <section class="glass-card charts-section">
-            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                <i data-lucide="bar-chart-3" class="w-6 h-6 text-purple-400"></i>
-                Análise Visual
-            </h2>
-            
-            <!-- Seletor de Gráficos -->
-            <div class="chart-selector">
-                <button class="chart-tab active" data-chart="bar" data-testid="chart-tab-bar">
-                    <i data-lucide="bar-chart" class="w-4 h-4" style="display: inline; margin-right: 0.5rem;"></i>
-                    Barras
-                </button>
-                <button class="chart-tab" data-chart="pie" data-testid="chart-tab-pie">
-                    <i data-lucide="pie-chart" class="w-4 h-4" style="display: inline; margin-right: 0.5rem;"></i>
-                    Pizza
-                </button>
-                <button class="chart-tab" data-chart="line" data-testid="chart-tab-line">
-                    <i data-lucide="activity" class="w-4 h-4" style="display: inline; margin-right: 0.5rem;"></i>
-                    Linha
-                </button>
-                <button class="chart-tab" data-chart="doughnut" data-testid="chart-tab-doughnut">
-                    <i data-lucide="circle" class="w-4 h-4" style="display: inline; margin-right: 0.5rem;"></i>
-                    Rosca
-                </button>
-                <button class="chart-tab" data-chart="area" data-testid="chart-tab-area">
-                    <i data-lucide="trending-up" class="w-4 h-4" style="display: inline; margin-right: 0.5rem;"></i>
-                    Área
-                </button>
-            </div>
-            
-            <div class="chart-container">
-                <canvas id="mainChart" data-testid="main-chart"></canvas>
-            </div>
+        <!-- Gráfico -->
+        <section class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i data-lucide="bar-chart"
+                    class="w-6 h-6"></i> Entradas x Saídas por Categoria</h2>
+            <canvas id="graficoCombinado" class="w-full h-72"></canvas>
+
+            <canvas id="grafico"></canvas>
         </section>
 
         <!-- Metas -->
-        <section class="glass-card goals-section">
-            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                <i data-lucide="target" class="w-6 h-6 text-purple-400"></i>
-                Minhas Metas
-            </h2>
-            <div class="form-grid mb-6">
-                <input type="text" id="nomeMeta" placeholder="Nome da Meta" class="input-field" data-testid="goal-name-input">
-                <input type="text" id="valorMeta" placeholder="Valor Objetivo (R$)" class="input-field" data-testid="goal-target-input">
-                <input type="text" id="valorAtualMeta" placeholder="Valor Atual (R$)" class="input-field" data-testid="goal-current-input">
-                <button id="btnAddMeta" class="btn btn-success" data-testid="add-goal-btn">
-                    <i data-lucide="plus" class="w-5 h-5"></i>
-                    <span>Criar Meta</span>
+        <section class="bg-white p-6 rounded-xl shadow-lg space-y-6">
+            <h2 class="text-xl font-semibold flex items-center gap-2"><i data-lucide="target" class="w-6 h-6"></i>
+                Minhas Metas</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input type="text" id="nomeMeta" placeholder="Nome da Meta"
+                    class="p-4 border border-gray-300 rounded-lg w-full">
+                <input type="text" id="valorMeta" placeholder="Valor Objetivo (R$)"
+                    class="p-4 border border-gray-300 rounded-lg w-full">
+                <input type="text" id="valorAtualMeta" placeholder="Valor Atual (R$)"
+                    class="p-4 border border-gray-300 rounded-lg w-full">
+                <button id="btnAddMeta"
+                    class="bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-all ease-in-out duration-200 flex items-center gap-2">
+                    <i data-lucide="plus" class="w-5 h-5"></i> Criar Meta
                 </button>
             </div>
-            <div id="listaMetas" class="space-y-3" data-testid="goals-list"></div>
+            <div id="listaMetas" class="space-y-3 text-lg font-semibold"></div>
         </section>
 
     </div>
 
-    <!-- Modal de Editar Transação -->
-    <div id="modalEditarTransacao" class="modal-overlay">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h2 class="modal-title">
-                    <i data-lucide="edit" class="w-6 h-6" style="display: inline; margin-right: 0.5rem;"></i>
-                    Editar Transação
-                </h2>
-                <button class="close-modal" onclick="fecharModalEditar()" data-testid="close-edit-modal-btn">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            <form id="formEditarTransacao" data-testid="edit-transaction-form">
-                <input type="hidden" id="editId">
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">Valor (R$)</label>
-                        <input type="text" id="editValor" class="input-field" placeholder="Valor" data-testid="edit-value-input">
-                    </div>
-                    <div class="input-group">
-                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">Tipo</label>
-                        <select id="editTipo" class="input-field" data-testid="edit-type-select">
-                            <option value="entrada">Entrada</option>
-                            <option value="saida">Saída</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">Categoria</label>
-                        <select id="editCategoria" class="input-field" data-testid="edit-category-select"></select>
-                    </div>
-                    <div class="input-group">
-                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">Data</label>
-                        <input type="month" id="editData" class="input-field" data-testid="edit-date-input">
-                    </div>
-                </div>
-                <div class="flex gap-3" style="margin-top: 1.5rem;">
-                    <button type="submit" class="btn btn-primary" data-testid="save-edit-btn">
-                        <i data-lucide="save" class="w-5 h-5"></i>
-                        <span>Salvar Alterações</span>
-                    </button>
-                    <button type="button" onclick="fecharModalEditar()" class="btn" style="background: rgba(255,255,255,0.1);" data-testid="cancel-edit-btn">
-                        <span>Cancelar</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Modal de Gerenciamento de Categorias -->
-    <div id="modalCategorias" class="modal-overlay">
-        <div class="modal-content" style="max-width: 900px;" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h2 class="modal-title">
-                    <i data-lucide="folder" class="w-6 h-6" style="display: inline; margin-right: 0.5rem;"></i>
-                    Gerenciar Categorias
+    <div id="modalCategorias">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex justify-between items-center">
+                <h2 class="text-2xl font-bold flex items-center gap-3">
+                    <i data-lucide="folder" class="w-7 h-7"></i>
+                    Gerenciar Categorias Personalizadas
                 </h2>
-                <button id="btnFecharModal" class="close-modal" data-testid="close-categories-modal-btn">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button id="btnFecharModal" class="hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all">
+                    <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
 
-            <!-- Formulário -->
-            <div style="background: rgba(139, 92, 246, 0.1); padding: 1.5rem; border-radius: 16px; margin-bottom: 1.5rem; border: 1px solid rgba(139, 92, 246, 0.3);">
-                <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">
-                    <i data-lucide="plus-circle" class="w-5 h-5" style="display: inline; margin-right: 0.5rem; color: var(--primary);"></i>
-                    <span id="tituloFormCategoria">Nova Categoria</span>
-                </h3>
-                <form id="formCategoria" data-testid="category-form">
-                    <input type="hidden" id="categoriaEditId">
-                    <div class="form-grid">
-                        <input type="text" id="inputNomeCategoria" placeholder="Nome da categoria" required class="input-field" data-testid="category-name-input">
-                        <select id="inputTipoCategoria" required class="input-field" data-testid="category-type-select">
-                            <option value="">Selecione o tipo</option>
-                            <option value="entrada">Entrada</option>
-                            <option value="saida">Saída</option>
-                        </select>
-                    </div>
-                    <div class="flex gap-3" style="margin-top: 1rem;">
-                        <button type="submit" class="btn btn-primary" data-testid="save-category-btn">
-                            <i data-lucide="save" class="w-5 h-5"></i>
-                            <span id="btnTextoSalvar">Criar Categoria</span>
-                        </button>
-                        <button type="button" id="btnCancelarEdicao" class="btn hidden" style="background: rgba(255,255,255,0.1);" data-testid="cancel-category-edit-btn">
-                            <span>Cancelar</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
+            <!-- Conteúdo -->
+            <div class="p-6 overflow-y-auto flex-1">
+                <!-- Formulário -->
+                <div class="bg-blue-50 p-6 rounded-xl mb-6">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-5 h-5 text-blue-600"></i>
+                        <span id="tituloFormCategoria">Nova Categoria</span>
+                    </h3>
+                    <form id="formCategoria" class="space-y-4">
+                        <input type="hidden" id="categoriaEditId">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" id="inputNomeCategoria" placeholder="Nome da categoria" required
+                                class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
+                            <select id="inputTipoCategoria" required
+                                class="p-4 border border-gray-300 rounded-lg w-full focus:ring-2 ring-blue-400 focus:outline-none">
+                                <option value="">Selecione o tipo</option>
+                                <option value="entrada">Entrada</option>
+                                <option value="saida">Saída</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="submit"
+                                class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2">
+                                <i data-lucide="save" class="w-5 h-5"></i>
+                                <span id="btnTextoSalvar">Criar Categoria</span>
+                            </button>
+                            <button type="button" id="btnCancelarEdicao"
+                                class="bg-gray-400 text-white px-6 py-3 rounded-lg hover:bg-gray-500 transition-all hidden">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
-            <!-- Lista de Categorias -->
-            <div>
-                <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">
-                    <i data-lucide="list" class="w-5 h-5" style="display: inline; margin-right: 0.5rem; color: var(--text-secondary);"></i>
-                    Categorias Personalizadas
-                </h3>
-                <div id="listaCategoriasUsuario" style="max-height: 400px; overflow-y: auto;" data-testid="user-categories-list">
-                    <!-- Categorias serão inseridas aqui via JavaScript -->
+                <!-- Lista de Categorias -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold flex items-center gap-2">
+                        <i data-lucide="list" class="w-5 h-5 text-gray-600"></i>
+                        Minhas Categorias Personalizadas
+                    </h3>
+                    <div id="listaCategoriasUsuario" class="space-y-2">
+                        <!-- Categorias serão inseridas aqui via JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
