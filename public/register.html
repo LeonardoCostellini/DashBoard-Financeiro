@@ -2,9 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Criar Conta</title>
+  <title>FinancePro - Criar Conta</title>
   <link rel="icon" href="img/profit_1838239.png" type="image/png">
   <link href="output.css" rel="stylesheet">
+  <link href="auth-style.css" rel="stylesheet">
 </head>
 
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
@@ -15,25 +16,32 @@
   }
 </script>
 
-<div class="bg-white p-8 rounded-xl shadow w-full max-w-md">
+<!-- Logo and Brand -->
+<div class="logo-wrapper" style="position: absolute; top: 3rem; text-align: center; width: 100%;">
+  <div class="logo-icon" style="margin: 0 auto;"></div>
+  <div class="brand-name">Finance<span>Pro</span></div>
+  <p class="auth-subtitle">Crie sua conta gratuitamente</p>
+</div>
+
+<div class="bg-white p-8 rounded-xl shadow w-full max-w-md" style="margin-top: 8rem;">
   <h1 class="text-2xl font-bold mb-6 text-center">Criar Conta</h1>
 
-  <input id="nome" placeholder="Nome"
+  <input id="nome" placeholder="Seu nome"
     class="w-full mb-3 p-3 border rounded">
 
-  <input id="email" type="email" placeholder="Email"
+  <input id="email" type="email" placeholder="seu@email.com"
     class="w-full mb-3 p-3 border rounded">
 
-  <input id="senha" type="password" placeholder="Senha"
+  <input id="senha" type="password" placeholder="••••••••"
     class="w-full mb-4 p-3 border rounded">
 
   <button onclick="register()"
     class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">
-    Criar Conta
+    Criar Conta →
   </button>
 
   <p class="text-center mt-4 text-sm">
-    Já tem conta?
+    Já tem uma conta?
     <a href="login.html" class="text-blue-600 font-semibold">
       Entrar
     </a>

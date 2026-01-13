@@ -1,0 +1,493 @@
+/* ============================================
+   FINANCEPRO DASHBOARD - VISUAL DESIGN
+   Based on provided screenshots
+============================================ */
+
+:root {
+  /* Core Colors from Screenshots */
+  --fp-green: #00C853;
+  --fp-green-dark: #00A344;
+  --fp-red: #EF4444;
+  --fp-red-dark: #DC2626;
+  --fp-yellow: #FFC107;
+  --fp-yellow-dark: #FFA000;
+  
+  /* Background Colors */
+  --fp-bg-primary: #0a0f1e;
+  --fp-bg-secondary: #131a2e;
+  --fp-bg-card: #1a2332;
+  --fp-bg-input: rgba(26, 35, 50, 0.6);
+  
+  /* Text Colors */
+  --fp-text-primary: #FFFFFF;
+  --fp-text-secondary: #B0BEC5;
+  --fp-text-muted: #78909C;
+  
+  /* Border & Shadow */
+  --fp-border: rgba(255, 255, 255, 0.1);
+  --fp-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--fp-bg-primary);
+  color: var(--fp-text-primary);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Animated Radial Gradient Background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(0, 200, 83, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: pulseGlow 8s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* Override Tailwind background */
+.bg-gradient-to-br {
+  background: var(--fp-bg-primary) !important;
+}
+
+/* Header Styles */
+header {
+  position: relative;
+  z-index: 10;
+  padding: 1.5rem 0;
+}
+
+header h1 {
+  color: var(--fp-text-primary) !important;
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+header h1 svg,
+header h1 i {
+  color: var(--fp-green) !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+/* Logout Button */
+header button[onclick="logout()"] {
+  background: transparent !important;
+  border: 1px solid var(--fp-border) !important;
+  color: var(--fp-text-secondary) !important;
+  padding: 0.625rem 1.25rem !important;
+  border-radius: 8px !important;
+  font-size: 0.875rem !important;
+  transition: all 0.3s ease !important;
+}
+
+header button[onclick="logout()"]:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border-color: var(--fp-red) !important;
+  color: var(--fp-red) !important;
+}
+
+/* Menu Button */
+#btnMenuCategorias {
+  background: var(--fp-bg-card) !important;
+  border: 1px solid var(--fp-border) !important;
+  border-radius: 8px !important;
+  padding: 0.5rem !important;
+  transition: all 0.3s ease !important;
+}
+
+#btnMenuCategorias:hover {
+  background: var(--fp-bg-secondary) !important;
+  border-color: var(--fp-green) !important;
+}
+
+#btnMenuCategorias svg,
+#btnMenuCategorias i {
+  color: var(--fp-text-secondary) !important;
+}
+
+/* Form Card */
+#form-transacao {
+  background: var(--fp-bg-card) !important;
+  border: 1px solid var(--fp-border) !important;
+  border-radius: 16px !important;
+  padding: 2rem !important;
+  box-shadow: var(--fp-shadow) !important;
+  position: relative;
+  z-index: 10;
+}
+
+/* Input Fields */
+input[type="text"],
+input[type="number"],
+input[type="month"],
+input[type="email"],
+input[type="password"],
+select {
+  background: var(--fp-bg-input) !important;
+  border: 1px solid var(--fp-border) !important;
+  color: var(--fp-text-primary) !important;
+  border-radius: 8px !important;
+  padding: 0.875rem 1rem !important;
+  font-size: 0.9375rem !important;
+  transition: all 0.3s ease !important;
+}
+
+input::placeholder {
+  color: var(--fp-text-muted) !important;
+}
+
+input:focus,
+select:focus {
+  outline: none !important;
+  background: rgba(26, 35, 50, 0.8) !important;
+  border-color: var(--fp-green) !important;
+  box-shadow: 0 0 0 3px rgba(0, 200, 83, 0.1) !important;
+}
+
+/* Submit Button */
+#form-transacao button[type="submit"] {
+  background: var(--fp-green) !important;
+  color: var(--fp-bg-primary) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.875rem 1.75rem !important;
+  font-weight: 600 !important;
+  font-size: 0.9375rem !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+#form-transacao button[type="submit"]:hover {
+  background: var(--fp-green-dark) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 200, 83, 0.4) !important;
+}
+
+/* Filter Section */
+.flex.items-center.gap-4 {
+  position: relative;
+  z-index: 10;
+}
+
+.flex.items-center.gap-4 label {
+  color: var(--fp-text-secondary) !important;
+  font-weight: 500 !important;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Summary Cards */
+section.grid.grid-cols-1 {
+  position: relative;
+  z-index: 10;
+}
+
+/* Income Card (Entradas) */
+.bg-green-50 {
+  background: var(--fp-bg-card) !important;
+  border: 1px solid rgba(0, 200, 83, 0.2) !important;
+  border-left: 4px solid var(--fp-green) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--fp-shadow) !important;
+  transition: all 0.3s ease !important;
+}
+
+.bg-green-50:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.bg-green-50 .text-green-600,
+.bg-green-50 i[data-lucide="arrow-down-circle"] {
+  color: var(--fp-green) !important;
+}
+
+.bg-green-50 #total-entradas {
+  color: var(--fp-green) !important;
+  font-weight: 700 !important;
+  font-size: 1.75rem !important;
+}
+
+/* Expense Card (Saídas) */
+.bg-red-50 {
+  background: var(--fp-bg-card) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  border-left: 4px solid var(--fp-red) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--fp-shadow) !important;
+  transition: all 0.3s ease !important;
+}
+
+.bg-red-50:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.bg-red-50 .text-red-600,
+.bg-red-50 i[data-lucide="arrow-up-circle"] {
+  color: var(--fp-red) !important;
+}
+
+.bg-red-50 #total-saidas {
+  color: var(--fp-red) !important;
+  font-weight: 700 !important;
+  font-size: 1.75rem !important;
+}
+
+/* Balance Card (Saldo) */
+.bg-blue-50 {
+  background: var(--fp-bg-card) !important;
+  border: 1px solid rgba(255, 193, 7, 0.2) !important;
+  border-left: 4px solid var(--fp-yellow) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--fp-shadow) !important;
+  transition: all 0.3s ease !important;
+}
+
+.bg-blue-50:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.bg-blue-50 .text-blue-600,
+.bg-blue-50 i[data-lucide="dollar-sign"] {
+  color: var(--fp-yellow) !important;
+}
+
+.bg-blue-50 #saldo {
+  color: var(--fp-yellow) !important;
+  font-weight: 700 !important;
+  font-size: 1.75rem !important;
+}
+
+/* Card Labels */
+.bg-green-50 p,
+.bg-red-50 p,
+.bg-blue-50 p {
+  color: var(--fp-text-secondary) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+}
+
+/* Transactions Section */
+.bg-white {
+  background: var(--fp-bg-card) !important;
+  border: 1px solid var(--fp-border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--fp-shadow) !important;
+  position: relative;
+  z-index: 10;
+}
+
+.bg-white h2 {
+  color: var(--fp-text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 1.125rem !important;
+}
+
+/* Table Styles */
+table {
+  background: transparent !important;
+}
+
+table thead {
+  background: var(--fp-bg-secondary) !important;
+}
+
+table thead th {
+  color: var(--fp-text-secondary) !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 1rem !important;
+}
+
+table tbody tr {
+  border-bottom: 1px solid var(--fp-border) !important;
+  transition: all 0.2s ease !important;
+}
+
+table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+table tbody td {
+  color: var(--fp-text-primary) !important;
+  padding: 1rem !important;
+  font-size: 0.9375rem !important;
+}
+
+/* Transaction Values */
+table tbody td:first-child {
+  font-weight: 600 !important;
+}
+
+/* Action Buttons in Table */
+table button {
+  background: transparent !important;
+  border: none !important;
+  color: var(--fp-red) !important;
+  padding: 0.5rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+table button:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  transform: scale(1.1) !important;
+}
+
+/* Chart Section */
+canvas {
+  background: transparent !important;
+}
+
+/* Goals Section */
+#btnAddMeta {
+  background: var(--fp-green) !important;
+  color: var(--fp-bg-primary) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.875rem 1.5rem !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3) !important;
+}
+
+#btnAddMeta:hover {
+  background: var(--fp-green-dark) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 200, 83, 0.4) !important;
+}
+
+/* Modal Styles */
+#modalCategorias .bg-white {
+  background: var(--fp-bg-card) !important;
+  border: 1px solid var(--fp-border) !important;
+}
+
+#modalCategorias .bg-gradient-to-r {
+  background: linear-gradient(135deg, var(--fp-green), var(--fp-green-dark)) !important;
+}
+
+#modalCategorias .bg-blue-50 {
+  background: var(--fp-bg-secondary) !important;
+  border: 1px solid var(--fp-border) !important;
+}
+
+#modalCategorias h2,
+#modalCategorias h3 {
+  color: var(--fp-text-primary) !important;
+}
+
+#modalCategorias .bg-blue-600 {
+  background: var(--fp-green) !important;
+}
+
+#modalCategorias .bg-blue-600:hover {
+  background: var(--fp-green-dark) !important;
+}
+
+/* Submenu */
+#submenuCategorias {
+  background: var(--fp-bg-card) !important;
+  border: 1px solid var(--fp-border) !important;
+  box-shadow: var(--fp-shadow) !important;
+}
+
+#submenuCategorias button {
+  color: var(--fp-text-primary) !important;
+}
+
+#submenuCategorias button:hover {
+  background: var(--fp-bg-secondary) !important;
+}
+
+#submenuCategorias button i {
+  color: var(--fp-green) !important;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--fp-bg-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--fp-green);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fp-green-dark);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  header h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  #form-transacao {
+    padding: 1.5rem !important;
+  }
+  
+  .bg-green-50 #total-entradas,
+  .bg-red-50 #total-saidas,
+  .bg-blue-50 #saldo {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* Utility Classes */
+.text-gray-800 {
+  color: var(--fp-text-primary) !important;
+}
+
+.text-gray-600,
+.text-gray-700 {
+  color: var(--fp-text-secondary) !important;
+}
+
+.divide-gray-200 tr,
+.divide-gray-100 tr {
+  border-color: var(--fp-border) !important;
+}
+
+.bg-gray-50 {
+  background: var(--fp-bg-secondary) !important;
+}

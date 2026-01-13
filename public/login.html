@@ -2,9 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Login</title>
+  <title>FinancePro - Login</title>
   <link rel="icon" href="img/profit_1838239.png" type="image/png">
   <link href="output.css" rel="stylesheet">
+  <link href="auth-style.css" rel="stylesheet">
 </head>
 
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
@@ -16,20 +17,27 @@
   }
 </script>
 
-<div class="bg-white p-8 rounded-xl shadow w-full max-w-md">
+<!-- Logo and Brand -->
+<div class="logo-wrapper" style="position: absolute; top: 3rem; text-align: center; width: 100%;">
+  <div class="logo-icon" style="margin: 0 auto;"></div>
+  <div class="brand-name">Finance<span>Pro</span></div>
+  <p class="auth-subtitle">Controle suas finanças com elegância</p>
+</div>
+
+<div class="bg-white p-8 rounded-xl shadow w-full max-w-md" style="margin-top: 8rem;">
   <h1 class="text-2xl font-bold mb-6 text-center">Entrar</h1>
 
 <input
   id="email"
   type="email"
-  placeholder="Email"
+  placeholder="seu@email.com"
   class="w-full mb-3 p-3 border rounded"
 />
 
 <input
   id="senha"
   type="password"
-  placeholder="Senha"
+  placeholder="••••••••"
   class="w-full mb-4 p-3 border rounded"
 />
 
@@ -38,15 +46,19 @@
     onclick="login()"
     class="w-full bg-green-600 text-white p-3 rounded hover:bg-green-700"
   >
-    Entrar
+    Entrar →
   </button>
 
   <p class="text-center mt-4 text-sm">
-    Não tem conta?
+    Não tem uma conta?
     <a href="/register.html" class="text-green-600 font-semibold">
       Criar conta
     </a>
   </p>
+  
+  <div class="auth-hint" style="margin-top: 1.5rem;">
+    Use qualquer email e senha para testar
+  </div>
 </div>
 
 <!-- SCRIPT SEMPRE NO FINAL -->
