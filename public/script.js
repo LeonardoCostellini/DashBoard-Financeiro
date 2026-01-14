@@ -331,8 +331,10 @@ function atualizarGrafico() {
   const entradas = labels.map(cat => categorias[cat].entrada);
   const saidas = labels.map(cat => categorias[cat].saida);
 
-  if (chartCombinado) {
-    chartCombinado.destroy();
+  // 🔧 CORREÇÃO: Usar Chart.getChart() para destruir corretamente
+  const existingChart = Chart.getChart(canvas);
+  if (existingChart) {
+    existingChart.destroy();
   }
 
   chartCombinado = new Chart(ctx, {
@@ -361,11 +363,16 @@ function atualizarGrafico() {
         tooltip: {
           callbacks: {
             label: function (ctx) {
-              return ctx.dataset.label + ": " +
-                ctx.raw.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL"
-                });
+              // 🔧 CORREÇÃO: Validar se raw é número antes de formatar
+              const rawValue = ctx.raw;
+              if (typeof rawValue === 'number' && !isNaN(rawValue)) {
+                return ctx.dataset.label + ": " +
+                  rawValue.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL"
+                  });
+              }
+              return ctx.dataset.label + ": R$ 0,00";
             }
           }
         }
@@ -373,11 +380,16 @@ function atualizarGrafico() {
       scales: {
         y: {
           ticks: {
-            callback: value =>
-              value.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL"
-              })
+            callback: function(value) {
+              // 🔧 CORREÇÃO: Validar se value é número antes de formatar
+              if (typeof value === 'number' && !isNaN(value)) {
+                return value.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL"
+                });
+              }
+              return 'R$ 0,00';
+            }
           }
         }
       }
