@@ -83,8 +83,10 @@ function atualizarGraficoPizza() {
         'rgba(168, 85, 247, 0.8)',  // Roxo claro
     ];
     
-    if (chartPizza) {
-        chartPizza.destroy();
+    // 🔧 CORREÇÃO: Usar Chart.getChart() para destruir corretamente
+    const existingChart = Chart.getChart(canvas);
+    if (existingChart) {
+        existingChart.destroy();
     }
     
     chartPizza = new Chart(ctx, {
@@ -126,13 +128,18 @@ function atualizarGraficoPizza() {
                     displayColors: true,
                     callbacks: {
                         label: function(ctx) {
-                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((ctx.parsed / total) * 100).toFixed(1);
-                            return ctx.label + ": " + 
-                                ctx.parsed.toLocaleString("pt-BR", {
-                                    style: "currency",
-                                    currency: "BRL"
-                                }) + ` (${percentage}%)`;
+                            // 🔧 CORREÇÃO: Validar se parsed é número antes de formatar
+                            const parsedValue = ctx.parsed;
+                            if (typeof parsedValue === 'number' && !isNaN(parsedValue)) {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((parsedValue / total) * 100).toFixed(1);
+                                return ctx.label + ": " + 
+                                    parsedValue.toLocaleString("pt-BR", {
+                                        style: "currency",
+                                        currency: "BRL"
+                                    }) + ` (${percentage}%)`;
+                            }
+                            return ctx.label + ": R$ 0,00 (0.0%)";
                         }
                     }
                 }
@@ -181,8 +188,10 @@ function atualizarGraficoLinha() {
         return `${meses[parseInt(mesNum) - 1]}/${ano}`;
     });
     
-    if (chartLinha) {
-        chartLinha.destroy();
+    // 🔧 CORREÇÃO: Usar Chart.getChart() para destruir corretamente
+    const existingChart = Chart.getChart(canvas);
+    if (existingChart) {
+        existingChart.destroy();
     }
     
     chartLinha = new Chart(ctx, {
@@ -265,11 +274,16 @@ function atualizarGraficoLinha() {
                     displayColors: true,
                     callbacks: {
                         label: function(ctx) {
-                            return ctx.dataset.label + ": " +
-                                ctx.parsed.y.toLocaleString("pt-BR", {
-                                    style: "currency",
-                                    currency: "BRL"
-                                });
+                            // 🔧 CORREÇÃO: Validar se parsed.y é número antes de formatar
+                            const yValue = ctx.parsed.y;
+                            if (typeof yValue === 'number' && !isNaN(yValue)) {
+                                return ctx.dataset.label + ": " +
+                                    yValue.toLocaleString("pt-BR", {
+                                        style: "currency",
+                                        currency: "BRL"
+                                    });
+                            }
+                            return ctx.dataset.label + ": R$ 0,00";
                         }
                     }
                 }
@@ -279,12 +293,17 @@ function atualizarGraficoLinha() {
                     beginAtZero: true,
                     ticks: {
                         color: '#B0BEC5',
-                        callback: value =>
-                            value.toLocaleString("pt-BR", {
-                                style: "currency",
-                                currency: "BRL",
-                                minimumFractionDigits: 0
-                            })
+                        callback: function(value) {
+                            // 🔧 CORREÇÃO: Validar se value é número antes de formatar
+                            if (typeof value === 'number' && !isNaN(value)) {
+                                return value.toLocaleString("pt-BR", {
+                                    style: "currency",
+                                    currency: "BRL",
+                                    minimumFractionDigits: 0
+                                });
+                            }
+                            return 'R$ 0';
+                        }
                     },
                     grid: {
                         color: 'rgba(255, 255, 255, 0.05)',
@@ -328,19 +347,35 @@ function atualizarGraficosCompletos() {
 // =======================
 // INTEGRAÇÃO COM SISTEMA EXISTENTE
 // =======================
+// 🔧 CORREÇÃO: Prevenir chamadas recursivas infinitas
+let isUpdating = false;
+
 // Sobrescreve a função original para incluir todos os gráficos
 const atualizarGraficoOriginal = window.atualizarGrafico;
 
 window.atualizarGrafico = function() {
-    if (atualizarGraficoOriginal) {
-        atualizarGraficoOriginal();
+    // Prevenir recursão infinita
+    if (isUpdating) return;
+    
+    isUpdating = true;
+    
+    try {
+        if (atualizarGraficoOriginal) {
+            atualizarGraficoOriginal();
+        }
+        // Atualizar apenas os gráficos adicionais (pizza e linha)
+        atualizarGraficoPizza();
+        atualizarGraficoLinha();
+    } finally {
+        isUpdating = false;
     }
-    atualizarGraficosCompletos();
 };
 
 // Inicializa todos os gráficos após o carregamento
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
-        atualizarGraficosCompletos();
+        if (typeof atualizarGrafico === 'function') {
+            atualizarGrafico();
+        }
     }, 1000);
 });
