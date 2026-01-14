@@ -184,6 +184,9 @@ function renderizarTransacoes() {
       const corValor =
         t.tipo === "entrada" ? "text-green-500" : "text-red-500";
 
+      // Formatar data para YYYY-MM
+      const dataFormatada = t.data.substring(0, 7); // Pega apenas "2026-01" de "2026-01-01T00:00:00.000Z"
+
       const tr = document.createElement('tr');
       tr.className = "border-b hover:bg-gray-50";
 
@@ -201,7 +204,7 @@ function renderizarTransacoes() {
         </td>
 
         <td class="py-3">
-          ${t.data}
+          ${dataFormatada}
         </td>
 
         <td class="py-3 text-right">
@@ -829,3 +832,4 @@ window.excluirCategoria = async function (id) {
     alert(err.message || "Erro ao excluir categoria. Tente novamente.");
   }
 };
+
