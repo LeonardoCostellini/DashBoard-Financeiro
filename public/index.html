@@ -121,13 +121,44 @@
             </div>
         </div>
 
-        <!-- Gráfico -->
+        <!-- Gráficos com Seleção -->
         <section class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i data-lucide="bar-chart"
-                    class="w-6 h-6"></i> Entradas x Saídas por Categoria</h2>
-            <canvas id="graficoCombinado" class="w-full h-72"></canvas>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold flex items-center gap-2">
+                    <i data-lucide="bar-chart" class="w-6 h-6"></i> Visualização de Dados
+                </h2>
+                
+                <!-- Seletores de Gráfico -->
+                <div class="flex gap-3" id="chart-selectors">
+                    <button data-chart="bar" class="chart-selector-btn active" data-testid="chart-btn-bar">
+                        <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                        <span>Barras</span>
+                    </button>
+                    <button data-chart="pie" class="chart-selector-btn" data-testid="chart-btn-pie">
+                        <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                        <span>Pizza</span>
+                    </button>
+                    <button data-chart="line" class="chart-selector-btn" data-testid="chart-btn-line">
+                        <i data-lucide="trending-up" class="w-5 h-5"></i>
+                        <span>Linha</span>
+                    </button>
+                </div>
+            </div>
 
-            <canvas id="grafico"></canvas>
+            <!-- Canvas para gráfico de Barras -->
+            <div id="chart-bar-container" class="chart-container-item active">
+                <canvas id="graficoCombinado" class="w-full h-72"></canvas>
+            </div>
+
+            <!-- Canvas para gráfico de Pizza -->
+            <div id="chart-pie-container" class="chart-container-item">
+                <canvas id="graficoPizza" class="w-full h-72"></canvas>
+            </div>
+
+            <!-- Canvas para gráfico de Linha -->
+            <div id="chart-line-container" class="chart-container-item">
+                <canvas id="graficoLinha" class="w-full h-72"></canvas>
+            </div>
         </section>
 
         <!-- Metas -->
@@ -230,6 +261,7 @@
 
     <script src="script.js"></script>
     <script src="user_categories.js"></script>
+    <script src="charts-manager.js"></script>
 
 
 </body>
