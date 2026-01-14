@@ -829,4 +829,3 @@ window.excluirCategoria = async function (id) {
     alert(err.message || "Erro ao excluir categoria. Tente novamente.");
   }
 };
-
