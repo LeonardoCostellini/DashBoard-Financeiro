@@ -665,17 +665,24 @@ async function carregarCategoriasUsuario(tipo) {
       ? "/api/user_categories?tipo=todos"
       : `/api/user_categories?tipo=${tipo}`;
     
+    console.log("🔍 Carregando categorias:", url);
+    
     const res = await fetch(url, {
       headers: {
         Authorization: "Bearer " + token
       }
     });
 
+    console.log("📡 Resposta da API:", res.status, res.statusText);
+
     if (!res.ok) {
+      const errorData = await res.json();
+      console.error("❌ Erro na resposta:", errorData);
       throw new Error("Erro ao carregar categorias");
     }
 
     const categorias = await res.json();
+    console.log("📦 Categorias recebidas:", categorias);
     listaCategoriasUsuario.innerHTML = "";
 
     if (categorias.length === 0) {
@@ -792,6 +799,8 @@ formCategoria.addEventListener("submit", async (e) => {
       ? JSON.stringify({ id: parseInt(id), nome, tipo })
       : JSON.stringify({ nome, tipo });
 
+    console.log("💾 Salvando categoria:", { method, nome, tipo, isEdicao });
+
     const res = await fetch("/api/user_categories", {
       method,
       headers: {
@@ -801,10 +810,16 @@ formCategoria.addEventListener("submit", async (e) => {
       body
     });
 
+    console.log("📡 Resposta do salvamento:", res.status, res.statusText);
+
     if (!res.ok) {
       const error = await res.json();
+      console.error("❌ Erro ao salvar:", error);
       throw new Error(error.error || "Erro ao salvar categoria");
     }
+
+    const responseData = await res.json();
+    console.log("✅ Categoria salva:", responseData);
 
     // Atualizar lista de categorias no modal
     await carregarCategoriasUsuario("todos");
