@@ -622,8 +622,8 @@ btnAbrirCategorias.addEventListener("click", () => {
   submenuCategorias.classList.add("hidden");
   modalCategorias.classList.add("show"); // Adiciona classe show
 
-  // Carregar TODAS as categorias (entrada e saída)
-  carregarCategoriasUsuario("todos");
+  const tipoAtual = tipoSelect.value || "entrada"; // fallback
+  carregarCategoriasUsuario(tipoAtual);
 
   lucide.createIcons();
 });
@@ -659,30 +659,20 @@ function resetarFormCategoria() {
 
 // Carregar categorias do usuário
 async function carregarCategoriasUsuario(tipo) {
+  if (!tipo) return; // 🔒 proteção
+
   try {
-    // Monta a URL baseado no tipo
-    const url = tipo === "todos" 
-      ? "/api/user_categories?tipo=todos"
-      : `/api/user_categories?tipo=${tipo}`;
-    
-    console.log("🔍 Carregando categorias:", url);
-    
-    const res = await fetch(url, {
+    const res = await fetch(`/api/user_categories?tipo=${tipo}`, {
       headers: {
         Authorization: "Bearer " + token
       }
     });
 
-    console.log("📡 Resposta da API:", res.status, res.statusText);
-
     if (!res.ok) {
-      const errorData = await res.json();
-      console.error("❌ Erro na resposta:", errorData);
       throw new Error("Erro ao carregar categorias");
     }
 
     const categorias = await res.json();
-    console.log("📦 Categorias recebidas:", categorias);
     listaCategoriasUsuario.innerHTML = "";
 
     if (categorias.length === 0) {
@@ -696,43 +686,40 @@ async function carregarCategoriasUsuario(tipo) {
       return;
     }
 
-    // Agrupar categorias por tipo
-    const categoriasEntrada = categorias.filter(cat => cat.tipo === "entrada");
-    const categoriasSaida = categorias.filter(cat => cat.tipo === "saida");
+    categorias.forEach(cat => {
+      const div = document.createElement("div");
+      div.className = "flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all";
 
-    // Renderizar categorias de ENTRADA
-    if (categoriasEntrada.length > 0) {
-      const tituloEntrada = document.createElement("div");
-      tituloEntrada.className = "mb-3 mt-2";
-      tituloEntrada.innerHTML = `
-        <h4 class="font-semibold text-gray-700 flex items-center gap-2">
-          <i data-lucide="trending-up" class="w-5 h-5 text-green-600"></i>
-          Categorias de Entrada
-        </h4>
+      const tipoBadge = cat.tipo === "entrada"
+        ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Entrada</span>'
+        : '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">Saída</span>';
+
+      div.innerHTML = `
+        <div class="flex items-center gap-3">
+          <i data-lucide="tag" class="w-5 h-5 text-gray-600"></i>
+          <div>
+            <p class="font-semibold text-gray-800">${cat.nome}</p>
+            ${tipoBadge}
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button 
+            onclick="editarCategoria(${cat.id}, '${cat.nome.replace(/'/g, "\\'")}', '${cat.tipo}')"
+            class="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded transition-all"
+            title="Editar">
+            <i data-lucide="edit-2" class="w-4 h-4"></i>
+          </button>
+          <button 
+            onclick="excluirCategoria(${cat.id})"
+            class="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition-all"
+            title="Excluir">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
       `;
-      listaCategoriasUsuario.appendChild(tituloEntrada);
 
-      categoriasEntrada.forEach(cat => {
-        listaCategoriasUsuario.appendChild(criarElementoCategoria(cat));
-      });
-    }
-
-    // Renderizar categorias de SAÍDA
-    if (categoriasSaida.length > 0) {
-      const tituloSaida = document.createElement("div");
-      tituloSaida.className = "mb-3 mt-6";
-      tituloSaida.innerHTML = `
-        <h4 class="font-semibold text-gray-700 flex items-center gap-2">
-          <i data-lucide="trending-down" class="w-5 h-5 text-red-600"></i>
-          Categorias de Saída
-        </h4>
-      `;
-      listaCategoriasUsuario.appendChild(tituloSaida);
-
-      categoriasSaida.forEach(cat => {
-        listaCategoriasUsuario.appendChild(criarElementoCategoria(cat));
-      });
-    }
+      listaCategoriasUsuario.appendChild(div);
+    });
 
     lucide.createIcons();
 
@@ -740,42 +727,6 @@ async function carregarCategoriasUsuario(tipo) {
     console.error("Erro ao carregar categorias:", err);
     alert("Erro ao carregar suas categorias. Por favor, tente novamente.");
   }
-}
-
-// Função auxiliar para criar o elemento de categoria
-function criarElementoCategoria(cat) {
-  const div = document.createElement("div");
-  div.className = "flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all";
-
-  const tipoBadge = cat.tipo === "entrada"
-    ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Entrada</span>'
-    : '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">Saída</span>';
-
-  div.innerHTML = `
-    <div class="flex items-center gap-3">
-      <i data-lucide="tag" class="w-5 h-5 text-gray-600"></i>
-      <div>
-        <p class="font-semibold text-gray-800">${cat.nome}</p>
-        ${tipoBadge}
-      </div>
-    </div>
-    <div class="flex gap-2">
-      <button 
-        onclick="editarCategoria(${cat.id}, '${cat.nome.replace(/'/g, "\\'")}', '${cat.tipo}')"
-        class="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded transition-all"
-        title="Editar">
-        <i data-lucide="edit-2" class="w-4 h-4"></i>
-      </button>
-      <button 
-        onclick="excluirCategoria(${cat.id})"
-        class="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition-all"
-        title="Excluir">
-        <i data-lucide="trash-2" class="w-4 h-4"></i>
-      </button>
-    </div>
-  `;
-
-  return div;
 }
 
 
@@ -799,8 +750,6 @@ formCategoria.addEventListener("submit", async (e) => {
       ? JSON.stringify({ id: parseInt(id), nome, tipo })
       : JSON.stringify({ nome, tipo });
 
-    console.log("💾 Salvando categoria:", { method, nome, tipo, isEdicao });
-
     const res = await fetch("/api/user_categories", {
       method,
       headers: {
@@ -810,19 +759,13 @@ formCategoria.addEventListener("submit", async (e) => {
       body
     });
 
-    console.log("📡 Resposta do salvamento:", res.status, res.statusText);
-
     if (!res.ok) {
       const error = await res.json();
-      console.error("❌ Erro ao salvar:", error);
       throw new Error(error.error || "Erro ao salvar categoria");
     }
 
-    const responseData = await res.json();
-    console.log("✅ Categoria salva:", responseData);
-
     // Atualizar lista de categorias no modal
-    await carregarCategoriasUsuario("todos");
+    await carregarCategoriasUsuario(tipo);
 
 
     // Atualizar dropdown de categorias no formulário principal
@@ -874,7 +817,8 @@ window.excluirCategoria = async function (id) {
     }
 
     // Atualizar lista de categorias no modal
-    await carregarCategoriasUsuario("todos");
+    const tipoAtual = tipoSelect.value || "entrada";
+    await carregarCategoriasUsuario(tipoAtual);
 
 
 
