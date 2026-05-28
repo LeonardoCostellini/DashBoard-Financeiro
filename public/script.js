@@ -1,7 +1,8 @@
 // =======================
 // AUTH
 // =======================
-const token = localStorage.getItem("token") || "";
+const token = localStorage.getItem("token");
+if (!token) location.href = "/login.html";
 
 // =======================
 // ELEMENTOS
