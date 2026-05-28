@@ -1,125 +1,76 @@
-console.log('Chart.js carregado?', typeof Chart !== 'undefined');
-
-
 // =======================
 // AUTH
 // =======================
-const token = localStorage.getItem("token");
-if (!token) location.href = "/login.html";
+const token = localStorage.getItem("token") || "";
 
 // =======================
 // ELEMENTOS
 // =======================
-const form = document.getElementById('form-transacao');
-const lista = document.getElementById('lista-transacoes');
-const totalEntradas = document.getElementById('total-entradas');
-const totalSaidas = document.getElementById('total-saidas');
-const saldo = document.getElementById('saldo');
+const form            = document.getElementById('form-transacao');
+const lista           = document.getElementById('lista-transacoes');
+const totalEntradas   = document.getElementById('total-entradas');
+const totalSaidas     = document.getElementById('total-saidas');
+const saldoEl         = document.getElementById('saldo');
 const categoriaSelect = document.getElementById('categoria');
-const tipoSelect = document.getElementById('tipo');
-const filtroMes = document.getElementById('filtro-mes');
+const tipoSelect      = document.getElementById('tipo');
+const filtroMes       = document.getElementById('filtro-mes');
 
 let transacoes = [];
-let chartCombinado = null;
 
 // =======================
 // UTILS
 // =======================
 function parseValorBrasileiro(v) {
-  return parseFloat(v.replace(/\./g, '').replace(',', '.'));
+  if (!v) return NaN;
+  return parseFloat(String(v).replace(/\./g, '').replace(',', '.'));
 }
 
 function formatarBrasileiro(v) {
   return Number(v).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2
+    style: "currency", currency: "BRL", minimumFractionDigits: 2
   });
 }
 
+// Remove skeleton assim que o dado chegar
+function removeSkeleton(el) {
+  el.classList.remove('skeleton');
+}
 
 // =======================
 // CATEGORIAS
 // =======================
-const categorias = {
-  entrada: [
-    'Salário',
-    'Bonificação',
-    'Vale Alimentação',
-    'Dinheiro Emprestado',
-    '13°'
-  ],
-  saida: [
-    'MORADIA (ALUGUEL/FINANCIAMENTO)',
-    'CONDOMÍNIO',
-    'SUPERMERCADO (VALOR MÉDIO)',
-    'LUZ (INCLUSO NO CONDOMÍNIO?)',
-    'GÁS (INCLUSO NO CONDOMÍNIO?)',
-    'IPTU (INCLUSO NO CONDOMÍNIO?)',
-    'PLANO DE SAÚDE',
-    'SEGURO DE VIDA',
-    'INVESTIMENTOS',
-    'FALCULDADE',
-    'RESERVA DE EMERGENCIA',
-    'CARTÃO DE CRÉDITO',
-    'COMBUSTÍVEL',
-    'UNIMED',
-    'GASTOS COM ANIMAIS',
-    'GASTOS IMPREVISTOS',
-    'GASTOS COM TRANSPORTE',
-    'GASTOS COM VEÍCULO',
-    'INTERNET RESIDENCIAL',
-    'ASSINATURAS(EX:NETFLIX)',
-    'PADARIA/FEIRA',
-    'SAÍDAS/CINEMA/LAZER',
-    'CABELEIRO',
-    'TARIFAS BANCÁRIAS',
-    'TELEFONIA/CELULAR'
-  ]
-
-};
-
 async function atualizarCategorias() {
   const res = await fetch("/api/categories/list", {
-    headers: {
-      Authorization: "Bearer " + token
-    }
+    headers: { Authorization: "Bearer " + token }
   });
+  if (!res.ok) return;
 
-  if (!res.ok) {
-    console.error("Erro ao carregar categorias");
-    return;
-  }
-
-  const categorias = await res.json();
-
+  const cats = await res.json();
   categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
-
-  categorias
-    .filter(cat => cat.tipo === tipoSelect.value)
-    .forEach(cat => {
+  cats
+    .filter(c => c.tipo === tipoSelect.value)
+    .forEach(c => {
       const opt = document.createElement("option");
-      opt.value = cat.nome;
-      opt.textContent = cat.nome;
+      opt.value = c.nome;
+      opt.textContent = c.nome;
       categoriaSelect.appendChild(opt);
     });
 }
 
-
+// =======================
+// CARREGAR TRANSAÇÕES
+// =======================
 async function carregarTransacoes() {
   const res = await fetch("/api/transactions/list", {
     headers: { Authorization: "Bearer " + token }
   });
-
-  const data = await res.json();
   if (!res.ok) return;
 
-  transacoes = data;
+  transacoes = await res.json();
   renderizarTransacoes();
   atualizarResumo();
-  atualizarGrafico(); // ⬅️ aqui
+  if (typeof atualizarGrafico === 'function') atualizarGrafico();
 }
-
 
 // =======================
 // CRIAR TRANSAÇÃO
@@ -127,135 +78,101 @@ async function carregarTransacoes() {
 form.addEventListener('submit', async e => {
   e.preventDefault();
 
-  const valorInput = document.getElementById("valor").value;
-  const valor = parseValorBrasileiro(valorInput);
-
-  if (isNaN(valor)) {
-    alert("Valor inválido");
-    return;
+  const valor = parseValorBrasileiro(document.getElementById("valor").value);
+  if (isNaN(valor) || valor <= 0) {
+    showToast("Informe um valor válido.", "error"); return;
   }
 
   let data = form.data.value;
+  if (!data) { showToast("Selecione o mês de referência.", "error"); return; }
+  if (data.length === 7) data += "-01";
 
-  // 🔧 Converte YYYY-MM → YYYY-MM-01
-  if (data.length === 7) {
-    data = data + "-01";
+  if (!categoriaSelect.value) {
+    showToast("Selecione uma categoria.", "error"); return;
   }
 
-  const payload = {
-    valor,
-    tipo: tipoSelect.value,
-    categoria: categoriaSelect.value,
-    data
-  };
+  const payload = { valor, tipo: tipoSelect.value, categoria: categoriaSelect.value, data };
 
   const res = await fetch("/api/transactions/create", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
-    },
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
     body: JSON.stringify(payload)
   });
 
   const response = await res.json();
-  console.log("API:", response);
+  if (!res.ok) { showToast(response.error || "Erro ao salvar transação.", "error"); return; }
 
-  if (!res.ok) {
-    alert(response.error || "Erro ao salvar");
-    return;
-  }
-
+  showToast("Transação adicionada com sucesso!", "success");
   form.reset();
+  // restaura mês atual no input data após reset
+  const hoje = new Date();
+  document.getElementById('data').value = hoje.toISOString().slice(0,7);
   carregarTransacoes();
 });
 
-
 // =======================
-// RENDER
+// RENDERIZAR TABELA
 // =======================
 function renderizarTransacoes() {
   lista.innerHTML = '';
   const mes = filtroMes.value;
 
-  transacoes.forEach(t => {
-    if (!mes || t.data.startsWith(mes)) {
+  const filtradas = transacoes.filter(t => !mes || t.data.startsWith(mes));
 
-      const corValor =
-        t.tipo === "entrada" ? "text-green-500" : "text-red-500";
+  if (filtradas.length === 0) {
+    lista.innerHTML = `
+      <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text3);">
+        Nenhuma transação neste período.
+      </td></tr>`;
+    return;
+  }
 
-      // Formatar data para YYYY-MM
-      const dataFormatada = t.data.substring(0, 7); // Pega apenas "2026-01" de "2026-01-01T00:00:00.000Z"
+  filtradas.forEach(t => {
+    const dataFormatada = t.data.substring(0, 7);
+    const isEntrada = t.tipo === 'entrada';
 
-      const tr = document.createElement('tr');
-      tr.className = "border-b hover:bg-gray-50";
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-weight:600;color:${isEntrada ? 'var(--green)' : 'var(--red)'}">
+        ${formatarBrasileiro(Number(t.valor))}
+      </td>
+      <td>
+        <span class="badge ${isEntrada ? 'badge-green' : 'badge-red'}">
+          ${isEntrada ? '↑' : '↓'} ${t.tipo.charAt(0).toUpperCase() + t.tipo.slice(1)}
+        </span>
+      </td>
+      <td style="color:var(--text2)">${t.categoria}</td>
+      <td style="color:var(--text3)">${dataFormatada}</td>
+      <td style="text-align:right">
+        <button class="btn btn-danger btn-sm" data-id="${t.id}" title="Excluir">
+          <i data-lucide="trash-2"></i>
+        </button>
+      </td>`;
 
-      tr.innerHTML = `
-        <td class="py-3 font-semibold ${corValor}">
-          ${formatarBrasileiro(Number(t.valor))}
-        </td>
-
-        <td class="py-3 capitalize">
-          ${t.tipo}
-        </td>
-
-        <td class="py-3">
-          ${t.categoria}
-        </td>
-
-        <td class="py-3">
-          ${dataFormatada}
-        </td>
-
-        <td class="py-3 text-right">
-          <button
-            class="border border-red-500 text-red-500 px-3 py-1 rounded
-                   hover:bg-red-500 hover:text-white transition"
-            data-id="${t.id}">
-            Excluir
-          </button>
-        </td>
-      `;
-
-      const btn = tr.querySelector("button");
-      btn.addEventListener("click", () => excluirTransacao(t.id));
-
-      lista.appendChild(tr);
-    }
+    tr.querySelector("button").addEventListener("click", () => excluirTransacao(t.id));
+    lista.appendChild(tr);
   });
-}
 
+  if (window.lucide) lucide.createIcons({ nodes: Array.from(lista.querySelectorAll('[data-lucide]')) });
+}
 
 // =======================
 // EXCLUIR
 // =======================
-
 async function excluirTransacao(id) {
-  if (!confirm("Excluir transação?")) return;
+  if (!confirm("Excluir esta transação?")) return;
 
   const res = await fetch(`/api/transactions/delete?id=${id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: "Bearer " + token
-    }
+    method: "DELETE", headers: { Authorization: "Bearer " + token }
   });
 
   let data;
-  try {
-    data = await res.json();
-  } catch {
-    alert("Erro inesperado no servidor");
-    return;
-  }
+  try { data = await res.json(); } catch { showToast("Erro inesperado.", "error"); return; }
 
-  if (!res.ok) {
-    alert(data.error || "Erro ao excluir");
-    return;
-  }
+  if (!res.ok) { showToast(data.error || "Erro ao excluir.", "error"); return; }
 
+  showToast("Transação excluída.", "success");
   carregarTransacoes();
-  atualizarGrafico();
-
 }
 
 // =======================
@@ -267,115 +184,72 @@ function atualizarResumo() {
 
   transacoes.forEach(t => {
     if (!mes || t.data.startsWith(mes)) {
-      const valor = Number(t.valor);
-      if (t.tipo === 'entrada') {
-        ent += valor;
-      } else {
-        sai += valor;
-      }
+      const v = Number(t.valor);
+      if (t.tipo === 'entrada') ent += v; else sai += v;
     }
   });
 
   totalEntradas.textContent = formatarBrasileiro(ent);
-  totalSaidas.textContent = formatarBrasileiro(sai);
-  saldo.textContent = formatarBrasileiro(ent - sai);
+  totalSaidas.textContent   = formatarBrasileiro(sai);
+  saldoEl.textContent       = formatarBrasileiro(ent - sai);
+
+  // cor dinâmica do saldo
+  saldoEl.className = 'card-value ' + (ent - sai >= 0 ? 'green' : 'red');
+
+  removeSkeleton(totalEntradas);
+  removeSkeleton(totalSaidas);
+  removeSkeleton(saldoEl);
 }
 
-
 // =======================
-// INIT
+// GRÁFICO DE BARRAS
 // =======================
-document.addEventListener("DOMContentLoaded", () => {
-  const hoje = new Date();
-  const mesAtual = hoje.toISOString().slice(0, 7); // YYYY-MM
-
-  filtroMes.value = mesAtual;
-
-  atualizarCategorias();
-  carregarTransacoes();
-
-  lucide.createIcons();
-});
-
-
-
-tipoSelect.addEventListener('change', atualizarCategorias);
-filtroMes.addEventListener('change', () => {
-  renderizarTransacoes();
-  atualizarResumo();
-  atualizarGrafico(); // ⬅️ ESSENCIAL
-});
-
 function atualizarGrafico() {
   const canvas = document.getElementById("graficoCombinado");
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
-  const mes = filtroMes.value; // ⬅️ ESSENCIAL
-
-  const categorias = {};
+  const mes = filtroMes.value;
+  const cats = {};
 
   transacoes.forEach(t => {
-    if (mes && !t.data.startsWith(mes)) return; // ⬅️ FILTRO REAL
-
-    if (!categorias[t.categoria]) {
-      categorias[t.categoria] = { entrada: 0, saida: 0 };
-    }
-
-    if (t.tipo === "entrada") {
-      categorias[t.categoria].entrada += Number(t.valor);
-    } else {
-      categorias[t.categoria].saida += Number(t.valor);
-    }
+    if (mes && !t.data.startsWith(mes)) return;
+    if (!cats[t.categoria]) cats[t.categoria] = { entrada: 0, saida: 0 };
+    if (t.tipo === "entrada") cats[t.categoria].entrada += Number(t.valor);
+    else cats[t.categoria].saida += Number(t.valor);
   });
 
+  const labels   = Object.keys(cats);
+  const entradas = labels.map(c => cats[c].entrada);
+  const saidas   = labels.map(c => cats[c].saida);
 
-  const labels = Object.keys(categorias);
-  const entradas = labels.map(cat => categorias[cat].entrada);
-  const saidas = labels.map(cat => categorias[cat].saida);
+  const existing = Chart.getChart(canvas);
+  if (existing) existing.destroy();
 
-  // 🔧 CORREÇÃO: Usar Chart.getChart() para destruir corretamente
-  const existingChart = Chart.getChart(canvas);
-  if (existingChart) {
-    existingChart.destroy();
-  }
-
-  chartCombinado = new Chart(ctx, {
+  new Chart(ctx, {
     type: "bar",
     data: {
       labels,
       datasets: [
-        {
-          label: "Entradas",
-          data: entradas,
-          backgroundColor: "rgba(34,197,94,0.7)"
-        },
-        {
-          label: "Saídas",
-          data: saidas,
-          backgroundColor: "rgba(239,68,68,0.7)"
-        }
+        { label: "Entradas", data: entradas, backgroundColor: "rgba(0,200,83,0.7)", borderRadius: 4 },
+        { label: "Saídas",   data: saidas,   backgroundColor: "rgba(239,68,68,0.7)", borderRadius: 4 }
       ]
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: "top"
-        },
+        legend: { labels: { color: '#B0BEC5', usePointStyle: true, font: { family: 'Inter, sans-serif', size: 12 } } },
         tooltip: {
+          backgroundColor: '#1a2332',
+          titleColor: '#fff',
+          bodyColor: '#B0BEC5',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
           callbacks: {
-            label: function (ctx) {
-              // 🔧 CORREÇÃO: Validar se raw é número antes de formatar
-              const rawValue = ctx.raw;
-              if (typeof rawValue === 'number' && !isNaN(rawValue)) {
-                return ctx.dataset.label + ": " +
-                  rawValue.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL"
-                  });
-              }
-              return ctx.dataset.label + ": R$ 0,00";
+            label: ctx => {
+              const v = ctx.raw;
+              return typeof v === 'number' ? ctx.dataset.label + ": " + v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : '';
             }
           }
         }
@@ -383,453 +257,266 @@ function atualizarGrafico() {
       scales: {
         y: {
           ticks: {
-            callback: function(value) {
-              // 🔧 CORREÇÃO: Validar se value é número antes de formatar
-              if (typeof value === 'number' && !isNaN(value)) {
-                return value.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL"
-                });
-              }
-              return 'R$ 0,00';
-            }
-          }
+            color: '#78909C',
+            callback: v => typeof v === 'number' ? 'R$ ' + (v / 1000 >= 1 ? (v/1000).toFixed(0)+'k' : v.toLocaleString('pt-BR', {minimumFractionDigits:0})) : ''
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        x: {
+          ticks: { color: '#78909C', maxRotation: 30 },
+          grid: { color: 'rgba(255,255,255,0.04)' }
         }
       }
     }
   });
 }
 
-
-
-async function carregarCategorias() {
-  const res = await fetch("/api/categorias", {
-    headers: {
-      Authorization: "Bearer " + token
-    }
-  });
-
-  if (!res.ok) return;
-
-  const data = await res.json();
-  categoriaSelect.innerHTML = "<option value=''>Selecione</option>";
-
-  data
-    .filter(cat => cat.tipo === tipoSelect.value)
-    .forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat.nome;
-      opt.textContent = cat.nome;
-      categoriaSelect.appendChild(opt);
-    });
-}
-
 // =======================
-// METAS (BANCO)
+// METAS
 // =======================
 async function carregarMetas() {
-  const res = await fetch("/api/metas", {
-    headers: { Authorization: "Bearer " + token }
-  });
-
+  const res = await fetch("/api/metas", { headers: { Authorization: "Bearer " + token } });
   if (!res.ok) return;
 
   const metas = await res.json();
   const container = document.getElementById("listaMetas");
   container.innerHTML = "";
-
-  metas.forEach(meta => {
-    container.innerHTML += renderizarMeta(meta);
-  });
+  metas.forEach(m => container.insertAdjacentHTML('beforeend', renderizarMeta(m)));
+  if (window.lucide) lucide.createIcons({ nodes: [container] });
 }
-
-lucide.createIcons();
 
 function renderizarMeta(meta) {
+  const atual  = Number(meta.valor_atual);
+  const total  = Number(meta.valor_total);
+  const perc   = total > 0 ? Math.min((atual / total) * 100, 100) : 0;
+  const done   = atual >= total && total > 0;
 
-  const atual = Number(meta.valor_atual);
-  const total = Number(meta.valor_total);
-
-  const perc = total > 0
-    ? Math.min((atual / total) * 100, 100)
-    : 0;
-
-  const concluida = atual >= total && total > 0;
-
-
-  let cor = "#f97316"; // laranja
-  let statusTexto = "Em progresso";
-
-  if (perc >= 50) cor = "#eab308"; // amarelo
-  if (perc >= 100) {
-    cor = "#22c55e"; // verde
-    statusTexto = "Meta concluída 🎉";
-  }
+  let cor = '#f97316';
+  let statusTxt = 'Em progresso';
+  if (perc >= 50) cor = '#eab308';
+  if (perc >= 100) { cor = '#00C853'; statusTxt = 'Concluída 🎉'; }
 
   return `
-    <div class="mb-6 p-4 bg-white shadow-md rounded-lg">
-      <h4 class="text-lg font-bold mb-1">${meta.nome}</h4>
-
-      <p class="text-sm text-gray-700 mb-2">
-        ${formatarBrasileiro(meta.valor_atual)} de ${formatarBrasileiro(meta.valor_total)}
-      </p>
-
-      <div class="w-full bg-gray-200 rounded-lg h-6 mt-2 overflow-hidden">
-        <div
-          class="h-full flex items-center justify-center text-white text-sm font-semibold transition-all duration-500"
-          style="width:${perc}%; background-color:${cor}">
+    <div class="meta-card">
+      <div class="meta-card-header">
+        <span class="meta-name">${meta.nome}</span>
+        <span class="badge" style="background:rgba(255,255,255,0.06);color:var(--text2);font-size:0.75rem;">
           ${perc.toFixed(1)}%
-        </div>
+        </span>
       </div>
-
-      <p class="mt-2 font-semibold ${concluida ? "text-green-600" : "text-gray-600"}">
-        ${statusTexto}
-      </p>
-
-      ${concluida
-      ? `
-            <button onclick="finalizarMeta(${meta.id})"
-              class="mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded">
-              Finalizar Meta
-            </button>
-          `
-      : `
-            <div class="mt-3 flex gap-2">
-              <input
-                type="text"
-                placeholder="Adicionar valor"
-                id="novaMeta-${meta.id}"
-                class="border border-gray-300 rounded px-2 py-1 w-full"
-              />
-              <button onclick="atualizarMeta(${meta.id})"
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded">
-                Atualizar
-              </button>
-            </div>
-          `
-    }
-    </div>
-  `;
+      <div class="meta-values">${formatarBrasileiro(atual)} de ${formatarBrasileiro(total)}</div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:${perc}%;background:${cor};"></div>
+      </div>
+      <div class="meta-status ${done ? 'done' : ''}">${statusTxt}</div>
+      ${done
+        ? `<button onclick="finalizarMeta(${meta.id})" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">
+             <i data-lucide="check"></i> Finalizar Meta
+           </button>`
+        : `<div class="meta-update-row">
+             <input type="text" placeholder="Adicionar valor" id="novaMeta-${meta.id}">
+             <button onclick="atualizarMeta(${meta.id})" class="btn btn-ghost btn-sm">Atualizar</button>
+           </div>`
+      }
+    </div>`;
 }
 
-
-
-
 document.getElementById("btnAddMeta").addEventListener("click", async () => {
-  const nome = document.getElementById("nomeMeta").value.trim();
+  const nome        = document.getElementById("nomeMeta").value.trim();
   const valor_total = parseValorBrasileiro(document.getElementById("valorMeta").value);
   const valor_atual = parseValorBrasileiro(document.getElementById("valorAtualMeta").value);
 
   if (!nome || isNaN(valor_total) || isNaN(valor_atual)) {
-    alert("Preencha os dados corretamente.");
-    return;
+    showToast("Preencha todos os dados da meta.", "error"); return;
   }
 
   const res = await fetch("/api/metas", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
     body: JSON.stringify({ nome, valor_total, valor_atual })
   });
 
-  if (!res.ok) return alert("Erro ao criar meta");
+  if (!res.ok) { showToast("Erro ao criar meta.", "error"); return; }
 
+  showToast("Meta criada com sucesso!", "success");
   document.getElementById("nomeMeta").value = "";
   document.getElementById("valorMeta").value = "";
   document.getElementById("valorAtualMeta").value = "";
-
   carregarMetas();
 });
 
 async function atualizarMeta(id) {
-  const input = document.getElementById(`novaMeta-${id}`).value;
-  const incremento = parseValorBrasileiro(input);
-
-  if (isNaN(incremento) || incremento <= 0) {
-    alert("Valor inválido");
-    return;
-  }
+  const incremento = parseValorBrasileiro(document.getElementById(`novaMeta-${id}`).value);
+  if (isNaN(incremento) || incremento <= 0) { showToast("Valor inválido.", "error"); return; }
 
   await fetch("/api/metas", {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
     body: JSON.stringify({ id, incremento })
   });
-
+  showToast("Meta atualizada!", "success");
   carregarMetas();
 }
-
-
 
 async function finalizarMeta(id) {
-  if (!confirm("Deseja finalizar esta meta?")) return;
-
-  await fetch(`/api/metas?id=${id}`, {
-    method: "DELETE",
-    headers: { Authorization: "Bearer " + token }
-  });
-
+  if (!confirm("Finalizar e remover esta meta?")) return;
+  await fetch(`/api/metas?id=${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
+  showToast("Meta finalizada!", "success");
   carregarMetas();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  carregarMetas();     // ⬅️ ISSO FAZ PUXAR DO BANCO
-  lucide.createIcons();
-});
-
-
-
 // =======================
-// GERENCIAMENTO DE CATEGORIAS PERSONALIZADAS
+// MODAL CATEGORIAS
 // =======================
-
-const modalCategorias = document.getElementById("modalCategorias");
-const btnMenuCategorias = document.getElementById("btnMenuCategorias");
-const submenuCategorias = document.getElementById("submenuCategorias");
-const btnAbrirCategorias = document.getElementById("btnAbrirCategorias");
-const btnFecharModal = document.getElementById("btnFecharModal");
-const formCategoria = document.getElementById("formCategoria");
-const inputNomeCategoria = document.getElementById("inputNomeCategoria");
-const inputTipoCategoria = document.getElementById("inputTipoCategoria");
-const categoriaEditId = document.getElementById("categoriaEditId");
-const btnCancelarEdicao = document.getElementById("btnCancelarEdicao");
-const btnTextoSalvar = document.getElementById("btnTextoSalvar");
-const tituloFormCategoria = document.getElementById("tituloFormCategoria");
+const modalCategorias      = document.getElementById("modalCategorias");
+const btnAbrirCategorias   = document.getElementById("btnAbrirCategorias");
+const btnFecharModal       = document.getElementById("btnFecharModal");
+const formCategoria        = document.getElementById("formCategoria");
+const inputNomeCategoria   = document.getElementById("inputNomeCategoria");
+const inputTipoCategoria   = document.getElementById("inputTipoCategoria");
+const categoriaEditId      = document.getElementById("categoriaEditId");
+const btnCancelarEdicao    = document.getElementById("btnCancelarEdicao");
+const btnTextoSalvar       = document.getElementById("btnTextoSalvar");
+const tituloFormCategoria  = document.getElementById("tituloFormCategoria");
 const listaCategoriasUsuario = document.getElementById("listaCategoriasUsuario");
 
-// Toggle do submenu
-btnMenuCategorias.addEventListener("click", (e) => {
-  e.stopPropagation();
-  submenuCategorias.classList.toggle("hidden");
-});
-
-// Fechar submenu ao clicar fora
-document.addEventListener("click", () => {
-  submenuCategorias.classList.add("hidden");
-});
-
-submenuCategorias.addEventListener("click", (e) => {
-  e.stopPropagation();
-});
-
-// Abrir modal de categorias
-btnAbrirCategorias.addEventListener("click", () => {
-  submenuCategorias.classList.add("hidden");
-  modalCategorias.classList.add("show"); // Adiciona classe show
-
-  const tipoAtual = tipoSelect.value || "entrada"; // fallback
-  carregarCategoriasUsuario(tipoAtual);
-
-  lucide.createIcons();
-});
-
-
-// Fechar modal
-btnFecharModal.addEventListener("click", () => {
-  modalCategorias.classList.remove("show"); // Remove classe show
+function abrirModal() {
+  modalCategorias.style.display = 'flex';
+  carregarCategoriasUsuario(tipoSelect.value || "entrada");
+  if (window.lucide) lucide.createIcons();
+}
+function fecharModal() {
+  modalCategorias.style.display = 'none';
   resetarFormCategoria();
-});
+}
 
-// Fechar modal ao clicar fora
-modalCategorias.addEventListener("click", (e) => {
-  if (e.target === modalCategorias) {
-    modalCategorias.classList.remove("show"); // Remove classe show
-    resetarFormCategoria();
-  }
-});
+btnAbrirCategorias.addEventListener("click", abrirModal);
+btnFecharModal.addEventListener("click", fecharModal);
+modalCategorias.addEventListener("click", e => { if (e.target === modalCategorias) fecharModal(); });
+btnCancelarEdicao.addEventListener("click", resetarFormCategoria);
 
-// Cancelar edição
-btnCancelarEdicao.addEventListener("click", () => {
-  resetarFormCategoria();
-});
-
-// Resetar formulário
 function resetarFormCategoria() {
   formCategoria.reset();
   categoriaEditId.value = "";
-  btnCancelarEdicao.classList.add("hidden");
+  btnCancelarEdicao.style.display = 'none';
   btnTextoSalvar.textContent = "Criar Categoria";
-  tituloFormCategoria.textContent = "Nova Categoria";
+  tituloFormCategoria.innerHTML = '<i data-lucide="plus-circle"></i> Nova Categoria';
+  if (window.lucide) lucide.createIcons({ nodes: [tituloFormCategoria] });
 }
 
-// Carregar categorias do usuário
 async function carregarCategoriasUsuario(tipo) {
-  if (!tipo) return; // 🔒 proteção
-
+  if (!tipo) return;
   try {
     const res = await fetch(`/api/user_categories?tipo=${tipo}`, {
-      headers: {
-        Authorization: "Bearer " + token
-      }
+      headers: { Authorization: "Bearer " + token }
     });
+    if (!res.ok) throw new Error();
 
-    if (!res.ok) {
-      throw new Error("Erro ao carregar categorias");
-    }
-
-    const categorias = await res.json();
+    const cats = await res.json();
     listaCategoriasUsuario.innerHTML = "";
 
-    if (categorias.length === 0) {
+    if (cats.length === 0) {
       listaCategoriasUsuario.innerHTML = `
-        <div class="text-center text-gray-500 py-8">
-          <i data-lucide="folder-open" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
-          <p>Você ainda não criou nenhuma categoria personalizada.</p>
-        </div>
-      `;
-      lucide.createIcons();
+        <div style="text-align:center;color:var(--text3);padding:2rem;">
+          <i data-lucide="folder-open" style="width:40px;height:40px;margin-bottom:0.5rem;opacity:0.4;display:block;margin-inline:auto;"></i>
+          Nenhuma categoria personalizada ainda.
+        </div>`;
+      if (window.lucide) lucide.createIcons({ nodes: [listaCategoriasUsuario] });
       return;
     }
 
-    categorias.forEach(cat => {
+    cats.forEach(cat => {
       const div = document.createElement("div");
-      div.className = "flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all";
-
-      const tipoBadge = cat.tipo === "entrada"
-        ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Entrada</span>'
-        : '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">Saída</span>';
-
+      div.className = "cat-item";
       div.innerHTML = `
-        <div class="flex items-center gap-3">
-          <i data-lucide="tag" class="w-5 h-5 text-gray-600"></i>
+        <div class="cat-item-info">
+          <i data-lucide="tag"></i>
           <div>
-            <p class="font-semibold text-gray-800">${cat.nome}</p>
-            ${tipoBadge}
+            <div class="cat-item-name">${cat.nome}</div>
+            <span class="badge ${cat.tipo === 'entrada' ? 'badge-green' : 'badge-red'}" style="font-size:0.7rem;">
+              ${cat.tipo === 'entrada' ? 'Entrada' : 'Saída'}
+            </span>
           </div>
         </div>
-        <div class="flex gap-2">
-          <button 
-            onclick="editarCategoria(${cat.id}, '${cat.nome.replace(/'/g, "\\'")}', '${cat.tipo}')"
-            class="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded transition-all"
-            title="Editar">
-            <i data-lucide="edit-2" class="w-4 h-4"></i>
+        <div class="cat-item-actions">
+          <button onclick="editarCategoria(${cat.id},'${cat.nome.replace(/'/g,"\\'")}','${cat.tipo}')" class="btn btn-ghost btn-sm" title="Editar">
+            <i data-lucide="edit-2"></i>
           </button>
-          <button 
-            onclick="excluirCategoria(${cat.id})"
-            class="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition-all"
-            title="Excluir">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          <button onclick="excluirCategoria(${cat.id})" class="btn btn-danger btn-sm" title="Excluir">
+            <i data-lucide="trash-2"></i>
           </button>
-        </div>
-      `;
-
+        </div>`;
       listaCategoriasUsuario.appendChild(div);
     });
-
-    lucide.createIcons();
-
-  } catch (err) {
-    console.error("Erro ao carregar categorias:", err);
-    alert("Erro ao carregar suas categorias. Por favor, tente novamente.");
-  }
+    if (window.lucide) lucide.createIcons({ nodes: [listaCategoriasUsuario] });
+  } catch { showToast("Erro ao carregar categorias.", "error"); }
 }
 
-
-// Criar ou atualizar categoria
-formCategoria.addEventListener("submit", async (e) => {
+formCategoria.addEventListener("submit", async e => {
   e.preventDefault();
-
   const nome = inputNomeCategoria.value.trim();
   const tipo = inputTipoCategoria.value;
-  const id = categoriaEditId.value;
+  const id   = categoriaEditId.value;
+  if (!nome || !tipo) { showToast("Preencha todos os campos.", "error"); return; }
 
-  if (!nome || !tipo) {
-    alert("Preencha todos os campos!");
-    return;
-  }
+  const isEdicao = id !== "";
+  const res = await fetch("/api/user_categories", {
+    method: isEdicao ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify(isEdicao ? { id: parseInt(id), nome, tipo } : { nome, tipo })
+  });
 
-  try {
-    const isEdicao = id !== "";
-    const method = isEdicao ? "PUT" : "POST";
-    const body = isEdicao
-      ? JSON.stringify({ id: parseInt(id), nome, tipo })
-      : JSON.stringify({ nome, tipo });
+  if (!res.ok) { const err = await res.json(); showToast(err.error || "Erro ao salvar.", "error"); return; }
 
-    const res = await fetch("/api/user_categories", {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-      body
-    });
-
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || "Erro ao salvar categoria");
-    }
-
-    // Atualizar lista de categorias no modal
-    await carregarCategoriasUsuario(tipo);
-
-
-    // Atualizar dropdown de categorias no formulário principal
-    await atualizarCategorias();
-
-    // Resetar formulário
-    resetarFormCategoria();
-
-    // Feedback visual
-    alert(isEdicao ? "Categoria atualizada com sucesso!" : "Categoria criada com sucesso!");
-
-  } catch (err) {
-    console.error("Erro ao salvar categoria:", err);
-    alert(err.message || "Erro ao salvar categoria. Tente novamente.");
-  }
+  showToast(isEdicao ? "Categoria atualizada!" : "Categoria criada!", "success");
+  await carregarCategoriasUsuario(tipo);
+  await atualizarCategorias();
+  resetarFormCategoria();
 });
 
-// Editar categoria
-window.editarCategoria = function (id, nome, tipo) {
+window.editarCategoria = function(id, nome, tipo) {
   categoriaEditId.value = id;
   inputNomeCategoria.value = nome;
   inputTipoCategoria.value = tipo;
-
-  btnCancelarEdicao.classList.remove("hidden");
+  btnCancelarEdicao.style.display = 'inline-flex';
   btnTextoSalvar.textContent = "Salvar Alterações";
   tituloFormCategoria.textContent = "Editar Categoria";
-
-  // Scroll suave para o formulário
   formCategoria.scrollIntoView({ behavior: "smooth", block: "nearest" });
 };
 
-// Excluir categoria
-window.excluirCategoria = async function (id) {
-  if (!confirm("Tem certeza que deseja excluir esta categoria?\n\nAtenção: Transações com esta categoria não serão excluídas.")) {
-    return;
-  }
-
-  try {
-    const res = await fetch(`/api/user_categories?id=${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: "Bearer " + token
-      }
-    });
-
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || "Erro ao excluir categoria");
-    }
-
-    // Atualizar lista de categorias no modal
-    const tipoAtual = tipoSelect.value || "entrada";
-    await carregarCategoriasUsuario(tipoAtual);
-
-
-
-    // Atualizar dropdown de categorias no formulário principal
-    await atualizarCategorias();
-
-    alert("Categoria excluída com sucesso!");
-
-  } catch (err) {
-    console.error("Erro ao excluir categoria:", err);
-    alert(err.message || "Erro ao excluir categoria. Tente novamente.");
-  }
+window.excluirCategoria = async function(id) {
+  if (!confirm("Excluir esta categoria?\nAs transações existentes não serão afetadas.")) return;
+  const res = await fetch(`/api/user_categories?id=${id}`, {
+    method: "DELETE", headers: { Authorization: "Bearer " + token }
+  });
+  if (!res.ok) { const err = await res.json(); showToast(err.error || "Erro ao excluir.", "error"); return; }
+  showToast("Categoria excluída.", "success");
+  await carregarCategoriasUsuario(tipoSelect.value || "entrada");
+  await atualizarCategorias();
 };
 
+// =======================
+// INIT
+// =======================
+document.addEventListener("DOMContentLoaded", () => {
+  const hoje = new Date();
+  const mesAtual = hoje.toISOString().slice(0, 7);
+
+  filtroMes.value = mesAtual;
+  document.getElementById('data').value = mesAtual;
+
+  if (typeof atualizarSubtitulo === 'function') atualizarSubtitulo(mesAtual);
+
+  atualizarCategorias();
+  carregarTransacoes();
+  carregarMetas();
+
+  lucide.createIcons();
+});
+
+tipoSelect.addEventListener('change', atualizarCategorias);
+filtroMes.addEventListener('change', () => {
+  renderizarTransacoes();
+  atualizarResumo();
+  if (typeof atualizarGrafico === 'function') atualizarGrafico();
+});

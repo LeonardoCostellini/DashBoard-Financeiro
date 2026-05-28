@@ -2,67 +2,46 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>FinancePro - Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinancePro — Login</title>
   <link rel="icon" href="img/profit_1838239.png" type="image/png">
-  <link href="output.css" rel="stylesheet">
-  <link href="auth-style.css" rel="stylesheet">
+  <link href="design-tokens.css" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-
-<script>
-  // SE JÁ ESTIVER LOGADO, VAI PRO DASHBOARD
-  if (localStorage.getItem("token")) {
-    window.location.href = "/";
-  }
-</script>
-
-<!-- Logo and Brand -->
-<div class="logo-wrapper" style="position: absolute; top: 3rem; text-align: center; width: 100%;">
-  <div class="logo-icon" style="margin: 0 auto;"></div>
-  <div class="brand-name">Finance<span>Pro</span></div>
-  <p class="auth-subtitle">Controle suas finanças com elegância</p>
-</div>
-
-<div class="bg-white p-8 rounded-xl shadow w-full max-w-md" style="margin-top: 8rem;">
-  <h1 class="text-2xl font-bold mb-6 text-center">Entrar</h1>
-
-<input
-  id="email"
-  type="email"
-  placeholder="seu@email.com"
-  class="w-full mb-3 p-3 border rounded"
-/>
-
-<input
-  id="senha"
-  type="password"
-  placeholder="••••••••"
-  class="w-full mb-4 p-3 border rounded"
-/>
+<body>
 
 
-  <button
-    onclick="login()"
-    class="w-full bg-green-600 text-white p-3 rounded hover:bg-green-700"
-  >
-    Entrar →
-  </button>
+<div class="auth-page">
+  <div class="auth-brand">
+    <div class="auth-brand-name">Finance<span>Pro</span></div>
+    <div class="auth-brand-sub">Controle suas finanças com inteligência</div>
+  </div>
 
-  <p class="text-center mt-4 text-sm">
-    Não tem uma conta?
-    <a href="/register.html" class="text-green-600 font-semibold">
-      Criar conta
-    </a>
-  </p>
-  
-  <div class="auth-hint" style="margin-top: 1.5rem;">
-    Use qualquer email e senha para testar
+  <div class="auth-card">
+    <h2>Entrar na sua conta</h2>
+    <div class="auth-form">
+      <div class="form-field">
+        <label class="form-label">E-mail</label>
+        <input id="email" type="email" placeholder="seu@email.com">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Senha</label>
+        <input id="senha" type="password" placeholder="••••••••">
+      </div>
+      <button onclick="login()" class="btn btn-primary">
+        <i data-lucide="log-in"></i> Entrar
+      </button>
+    </div>
+    <div class="auth-link">
+      Não tem conta? <a href="/register.html">Criar conta grátis</a>
+    </div>
+    <div class="auth-hint">Use qualquer e-mail e senha para testar</div>
   </div>
 </div>
 
-<!-- SCRIPT SEMPRE NO FINAL -->
+<div id="toast-container"></div>
+<script src="toast.js"></script>
 <script src="/auth.js"></script>
-
+<script>lucide.createIcons();</script>
 </body>
 </html>
