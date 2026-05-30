@@ -204,8 +204,11 @@
       <div class="modal-body">
         <!-- Form nova categoria -->
         <div class="card" style="background:var(--bg3);">
-          <div class="section-title" id="tituloFormCategoria"><i data-lucide="plus-circle"></i> Nova Categoria</div>
-          <form id="formCategoria">
+          <div class="section-title" id="tituloFormCategoria" style="cursor:pointer;user-select:none;display:flex;align-items:center;" onclick="toggleFormCategoria()">
+            <i data-lucide="plus-circle"></i> Nova Categoria
+            <i data-lucide="chevron-down" id="iconChevron" style="margin-left:auto;transition:transform 0.2s;"></i>
+          </div>
+          <form id="formCategoria" style="display:none;">
             <input type="hidden" id="categoriaEditId">
             <div class="form-grid" style="margin-bottom:0.875rem;">
               <div class="form-field">

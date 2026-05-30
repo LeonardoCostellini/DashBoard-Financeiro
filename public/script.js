@@ -396,6 +396,14 @@ const btnTextoSalvar       = document.getElementById("btnTextoSalvar");
 const tituloFormCategoria  = document.getElementById("tituloFormCategoria");
 const listaCategoriasUsuario = document.getElementById("listaCategoriasUsuario");
 
+function toggleFormCategoria(forceOpen) {
+  const form = document.getElementById('formCategoria');
+  const chevron = document.getElementById('iconChevron');
+  const aberto = forceOpen !== undefined ? forceOpen : form.style.display === 'none';
+  form.style.display = aberto ? 'block' : 'none';
+  if (chevron) chevron.style.transform = aberto ? 'rotate(180deg)' : '';
+}
+
 function abrirModal() {
   modalCategorias.style.display = 'flex';
   carregarCategoriasUsuario(); // carrega todas as categorias sem filtro de tipo
@@ -416,8 +424,9 @@ function resetarFormCategoria() {
   categoriaEditId.value = "";
   btnCancelarEdicao.style.display = 'none';
   btnTextoSalvar.textContent = "Criar Categoria";
-  tituloFormCategoria.innerHTML = '<i data-lucide="plus-circle"></i> Nova Categoria';
+  tituloFormCategoria.innerHTML = '<i data-lucide="plus-circle"></i> Nova Categoria <i data-lucide="chevron-down" id="iconChevron" style="margin-left:auto;transition:transform 0.2s;"></i>';
   if (window.lucide) lucide.createIcons({ nodes: [tituloFormCategoria] });
+  toggleFormCategoria(false); // fecha o accordion
 }
 
 async function carregarCategoriasUsuario(tipo) {
@@ -519,7 +528,9 @@ window.editarCategoria = function(id, nome, tipo) {
   inputTipoCategoria.value = tipo;
   btnCancelarEdicao.style.display = 'inline-flex';
   btnTextoSalvar.textContent = "Salvar Alterações";
-  tituloFormCategoria.textContent = "Editar Categoria";
+  tituloFormCategoria.innerHTML = '<i data-lucide="edit-2"></i> Editar Categoria <i data-lucide="chevron-down" id="iconChevron" style="margin-left:auto;transform:rotate(180deg);transition:transform 0.2s;"></i>';
+  if (window.lucide) lucide.createIcons({ nodes: [tituloFormCategoria] });
+  toggleFormCategoria(true); // abre o accordion
   formCategoria.scrollIntoView({ behavior: "smooth", block: "nearest" });
 };
 
