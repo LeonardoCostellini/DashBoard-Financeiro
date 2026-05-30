@@ -426,49 +426,69 @@ async function carregarCategoriasUsuario(tipo) {
     ? `/api/user_categories?tipo=${tipo}`
     : `/api/user_categories`;
   try {
-    const res = await fetch(url, {
+    let res = await fetch(url, {
       headers: { Authorization: "Bearer " + token }
     });
-    if (!res.ok) throw new Error();
 
-    const cats = await res.json();
-    listaCategoriasUsuario.innerHTML = "";
-
-    if (cats.length === 0) {
-      listaCategoriasUsuario.innerHTML = `
-        <div style="text-align:center;color:var(--text3);padding:2rem;">
-          <i data-lucide="folder-open" style="width:40px;height:40px;margin-bottom:0.5rem;opacity:0.4;display:block;margin-inline:auto;"></i>
-          Nenhuma categoria personalizada ainda.
-        </div>`;
-      if (window.lucide) lucide.createIcons({ nodes: [listaCategoriasUsuario] });
+    // Fallback: se o servidor antigo ainda exigir ?tipo=, busca os dois tipos separados
+    if (!res.ok && !tipo) {
+      const [resE, resS] = await Promise.all([
+        fetch(`/api/user_categories?tipo=entrada`, { headers: { Authorization: "Bearer " + token } }),
+        fetch(`/api/user_categories?tipo=saida`,   { headers: { Authorization: "Bearer " + token } })
+      ]);
+      const catsE = resE.ok ? await resE.json() : [];
+      const catsS = resS.ok ? await resS.json() : [];
+      const cats = [...catsE, ...catsS].sort((a, b) =>
+        a.tipo.localeCompare(b.tipo) || a.nome.localeCompare(b.nome)
+      );
+      renderizarListaCategorias(cats);
       return;
     }
 
-    cats.forEach(cat => {
-      const div = document.createElement("div");
-      div.className = "cat-item";
-      div.innerHTML = `
-        <div class="cat-item-info">
-          <i data-lucide="tag"></i>
-          <div>
-            <div class="cat-item-name">${cat.nome}</div>
-            <span class="badge ${cat.tipo === 'entrada' ? 'badge-green' : 'badge-red'}" style="font-size:0.7rem;">
-              ${cat.tipo === 'entrada' ? 'Entrada' : 'Saída'}
-            </span>
-          </div>
-        </div>
-        <div class="cat-item-actions">
-          <button onclick="editarCategoria(${cat.id},'${cat.nome.replace(/'/g,"\\'")}','${cat.tipo}')" class="btn btn-ghost btn-sm" title="Editar">
-            <i data-lucide="edit-2"></i>
-          </button>
-          <button onclick="excluirCategoria(${cat.id})" class="btn btn-danger btn-sm" title="Excluir">
-            <i data-lucide="trash-2"></i>
-          </button>
-        </div>`;
-      listaCategoriasUsuario.appendChild(div);
-    });
-    if (window.lucide) lucide.createIcons({ nodes: [listaCategoriasUsuario] });
+    if (!res.ok) throw new Error();
+
+    const cats = await res.json();
+    renderizarListaCategorias(cats);
   } catch { showToast("Erro ao carregar categorias.", "error"); }
+}
+
+function renderizarListaCategorias(cats) {
+  listaCategoriasUsuario.innerHTML = "";
+
+  if (cats.length === 0) {
+    listaCategoriasUsuario.innerHTML = `
+      <div style="text-align:center;color:var(--text3);padding:2rem;">
+        <i data-lucide="folder-open" style="width:40px;height:40px;margin-bottom:0.5rem;opacity:0.4;display:block;margin-inline:auto;"></i>
+        Nenhuma categoria personalizada ainda.
+      </div>`;
+    if (window.lucide) lucide.createIcons({ nodes: [listaCategoriasUsuario] });
+    return;
+  }
+
+  cats.forEach(cat => {
+    const div = document.createElement("div");
+    div.className = "cat-item";
+    div.innerHTML = `
+      <div class="cat-item-info">
+        <i data-lucide="tag"></i>
+        <div>
+          <div class="cat-item-name">${cat.nome}</div>
+          <span class="badge ${cat.tipo === 'entrada' ? 'badge-green' : 'badge-red'}" style="font-size:0.7rem;">
+            ${cat.tipo === 'entrada' ? 'Entrada' : 'Saída'}
+          </span>
+        </div>
+      </div>
+      <div class="cat-item-actions">
+        <button onclick="editarCategoria(${cat.id},'${cat.nome.replace(/'/g,"\\'")}','${cat.tipo}')" class="btn btn-ghost btn-sm" title="Editar">
+          <i data-lucide="edit-2"></i>
+        </button>
+        <button onclick="excluirCategoria(${cat.id})" class="btn btn-danger btn-sm" title="Excluir">
+          <i data-lucide="trash-2"></i>
+        </button>
+      </div>`;
+    listaCategoriasUsuario.appendChild(div);
+  });
+  if (window.lucide) lucide.createIcons({ nodes: [listaCategoriasUsuario] });
 }
 
 formCategoria.addEventListener("submit", async e => {
