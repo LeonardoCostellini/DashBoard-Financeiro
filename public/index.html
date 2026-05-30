@@ -114,7 +114,20 @@
 
     <!-- Tabela de transações -->
     <div class="card">
-      <div class="section-title"><i data-lucide="list"></i> Transações do período</div>
+      <div class="section-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;">
+        <div class="section-title" style="margin-bottom:0;"><i data-lucide="list"></i> Transações do período</div>
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+          <select id="ordenacao" class="form-control" style="font-size:0.82rem;padding:0.35rem 0.6rem;min-width:180px;">
+            <option value="data-desc">↓ Mais recentes primeiro</option>
+            <option value="data-asc">↑ Mais antigas primeiro</option>
+            <option value="valor-desc">↓ Maior valor primeiro</option>
+            <option value="valor-asc">↑ Menor valor primeiro</option>
+            <option value="tipo-asc">Tipo (Entrada → Saída)</option>
+            <option value="tipo-desc">Tipo (Saída → Entrada)</option>
+            <option value="categoria-asc">Categoria (A→Z)</option>
+          </select>
+        </div>
+      </div>
       <div class="table-wrapper">
         <table class="fp-table">
           <thead>

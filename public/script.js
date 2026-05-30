@@ -118,7 +118,22 @@ function renderizarTransacoes() {
   lista.innerHTML = '';
   const mes = filtroMes.value;
 
-  const filtradas = transacoes.filter(t => !mes || t.data.startsWith(mes));
+  let filtradas = transacoes.filter(t => !mes || t.data.startsWith(mes));
+
+  // Ordenação
+  const ordenacao = document.getElementById('ordenacao')?.value || 'data-desc';
+  const [campo, dir] = ordenacao.split('-');
+  filtradas = [...filtradas].sort((a, b) => {
+    let va, vb;
+    if (campo === 'valor') { va = Number(a.valor); vb = Number(b.valor); }
+    else if (campo === 'tipo') { va = a.tipo; vb = b.tipo; }
+    else if (campo === 'categoria') { va = a.categoria?.toLowerCase(); vb = b.categoria?.toLowerCase(); }
+    else { va = a.data; vb = b.data; } // data
+
+    if (va < vb) return dir === 'asc' ? -1 : 1;
+    if (va > vb) return dir === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   if (filtradas.length === 0) {
     lista.innerHTML = `
@@ -383,7 +398,7 @@ const listaCategoriasUsuario = document.getElementById("listaCategoriasUsuario")
 
 function abrirModal() {
   modalCategorias.style.display = 'flex';
-  carregarCategoriasUsuario(tipoSelect.value || "entrada");
+  carregarCategoriasUsuario(); // carrega todas as categorias sem filtro de tipo
   if (window.lucide) lucide.createIcons();
 }
 function fecharModal() {
@@ -406,9 +421,12 @@ function resetarFormCategoria() {
 }
 
 async function carregarCategoriasUsuario(tipo) {
-  if (!tipo) return;
+  // Se tipo não informado, carrega todos (sem filtro)
+  const url = tipo
+    ? `/api/user_categories?tipo=${tipo}`
+    : `/api/user_categories`;
   try {
-    const res = await fetch(`/api/user_categories?tipo=${tipo}`, {
+    const res = await fetch(url, {
       headers: { Authorization: "Bearer " + token }
     });
     if (!res.ok) throw new Error();
@@ -470,7 +488,7 @@ formCategoria.addEventListener("submit", async e => {
   if (!res.ok) { const err = await res.json(); showToast(err.error || "Erro ao salvar.", "error"); return; }
 
   showToast(isEdicao ? "Categoria atualizada!" : "Categoria criada!", "success");
-  await carregarCategoriasUsuario(tipo);
+  await carregarCategoriasUsuario(); // recarrega todas
   await atualizarCategorias();
   resetarFormCategoria();
 });
@@ -492,14 +510,14 @@ window.excluirCategoria = async function(id) {
   });
   if (!res.ok) { const err = await res.json(); showToast(err.error || "Erro ao excluir.", "error"); return; }
   showToast("Categoria excluída.", "success");
-  await carregarCategoriasUsuario(tipoSelect.value || "entrada");
+  await carregarCategoriasUsuario(); // recarrega todas
   await atualizarCategorias();
 };
 
 // =======================
 // INIT
 // =======================
-document.addEventListener("DOMContentLoaded", () => {
+async function inicializarDados() {
   const hoje = new Date();
   const mesAtual = hoje.toISOString().slice(0, 7);
 
@@ -508,16 +526,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (typeof atualizarSubtitulo === 'function') atualizarSubtitulo(mesAtual);
 
-  atualizarCategorias();
-  carregarTransacoes();
-  carregarMetas();
+  // Carrega tudo em paralelo, garantindo dados frescos a cada acesso
+  await Promise.all([
+    atualizarCategorias(),
+    carregarTransacoes(),
+    carregarMetas()
+  ]);
 
   lucide.createIcons();
-});
+}
+
+document.addEventListener("DOMContentLoaded", inicializarDados);
 
 tipoSelect.addEventListener('change', atualizarCategorias);
 filtroMes.addEventListener('change', () => {
   renderizarTransacoes();
   atualizarResumo();
   if (typeof atualizarGrafico === 'function') atualizarGrafico();
+});
+
+// Fix 4: re-renderiza ao mudar ordenação
+document.addEventListener('DOMContentLoaded', () => {
+  const ordenacaoEl = document.getElementById('ordenacao');
+  if (ordenacaoEl) ordenacaoEl.addEventListener('change', renderizarTransacoes);
 });

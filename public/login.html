@@ -42,6 +42,16 @@
 <div id="toast-container"></div>
 <script src="toast.js"></script>
 <script src="/auth.js"></script>
-<script>lucide.createIcons();</script>
+<script>
+  lucide.createIcons();
+  // Fix 3: permitir login com tecla Enter
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+      if (email && senha) login();
+    }
+  });
+</script>
 </body>
 </html>
