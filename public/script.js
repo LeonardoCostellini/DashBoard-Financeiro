@@ -406,7 +406,20 @@ function toggleFormCategoria(forceOpen) {
 
 function abrirModal() {
   modalCategorias.style.display = 'flex';
-  carregarCategoriasUsuario(); // carrega todas as categorias sem filtro de tipo
+  modalCategorias.style.alignItems = 'center';
+  modalCategorias.style.justifyContent = 'center';
+  // Garante que o modal-box respeite a altura da tela
+  const box = modalCategorias.querySelector('.modal-box');
+  if (box) {
+    box.style.height = '90vh';
+    box.style.maxHeight = '90vh';
+    box.style.display = 'flex';
+    box.style.flexDirection = 'column';
+    box.style.overflow = 'hidden';
+    const body = box.querySelector('.modal-body');
+    if (body) { body.style.overflowY = 'auto'; body.style.flex = '1'; body.style.minHeight = '0'; }
+  }
+  carregarCategoriasUsuario();
   if (window.lucide) lucide.createIcons();
 }
 function fecharModal() {
